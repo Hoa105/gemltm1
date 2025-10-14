@@ -1,0 +1,653 @@
+package client.GUI;
+
+import client.Client;
+import common.Message;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.animation.KeyFrame;
+import javafx.animation.ParallelTransition;
+import javafx.animation.PathTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.Group;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
+import javafx.scene.media.AudioClip;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.util.Duration;
+
+public class GameRoomController {
+
+    @FXML private TextArea chatArea;
+    @FXML private TextField chatInput;
+    @FXML private Button shootButton;
+    @FXML private Button goalkeeperButton;
+    @FXML private Button quitButton;
+    @FXML private Pane gamePane;
+    @FXML private Label scoreLabel;
+    @FXML private Label timerLabel;
+
+    private Client client;
+    private final ChoiceDialog<String> dialog = new ChoiceDialog<>("Middle", "Left", "Middle", "Right");
+
+    // -------------------------
+    //   Tham số đồ họa cố định
+    // -------------------------
+    private static final double PLAYER_W = 70 * 3;
+    private static final double PLAYER_H = 110;
+    private static final double KEEPER_H = 110;
+    // GOAL_WIDTH bây giờ là fallback; thực tế sẽ lấy từ ảnh goal.png đã scale
+    private static final double GOAL_WIDTH_FALLBACK = 200;
+
+    // -------------------------
+    //  Hằng số chuyển động sút
+    // -------------------------
+    private static final double KICK_STEP_Y = 40;
+    private static final Duration KICK_IN_TIME  = Duration.millis(300);
+    private static final Duration KICK_BACK_TIME = Duration.millis(300);
+
+    // -------------------------
+    //        Node đồ họa
+    // -------------------------
+    private Group ball;
+    private Circle ballCircle;
+    private Group goalkeeper;
+    private Group player;
+    private Group imageWinGroup;
+    private Group imageLoseGroup;
+
+    // Ảnh nền & khung thành
+    private ImageView fieldBgView;   // sân.png
+    private ImageView goalView;      // goal.png
+
+    // Kích thước/biên khung thành hiện tại (đọc từ ảnh goal.png sau khi scale)
+    private double currentGoalWidth = GOAL_WIDTH_FALLBACK;
+    private double currentGoalLeftX = 0;
+    private double currentGoalBottomY = 0;
+
+    // bề rộng hiển thị thực tế của thủ môn sau khi scale
+    private double keeperDisplayWidth = 0;
+
+    // =========================
+    //         Âm thanh
+    // =========================
+    private AudioClip siuuuuuu;
+    private AudioClip mu;
+
+    // =========================
+    //       Thời gian, lượt
+    // =========================
+    private Timeline countdownTimeline;
+    private int timeRemaining;
+    private static final int TURN_TIMEOUT = 15;
+    private int lastTurnDuration = 15;
+    private String yourRole = "";
+    private boolean isMyTurn = false;
+    private String waitingForOpponentAction = "";
+
+    // =========================================================
+    //                 CẬP NHẬT ĐIỂM LÊN UI
+    // =========================================================
+    public void updateScore(int[] scores) {
+        Platform.runLater(() -> {
+            int yourScore = scores[0];
+            int opponentScore = scores[1];
+            int currentRound = scores[2];
+            scoreLabel.setText("Round: " + (currentRound + 1) + "         Bạn: " + yourScore
+                    + "   -   Đối thủ: " + opponentScore);
+        });
+    }
+
+    public void setClient(Client client) { this.client = client; }
+
+    // =========================================================
+    //                   VÒNG ĐỜI MÀN GAME
+    // =========================================================
+    @FXML
+    private void initialize() {
+        shootButton.setDisable(true);
+        goalkeeperButton.setDisable(true);
+        if (timerLabel != null) timerLabel.setText("Thời gian còn lại: 0 giây");
+        Platform.runLater(this::drawField);
+        if (scoreLabel != null) scoreLabel.setText("Round: 1         Bạn: 0   -   Đối thủ: 0");
+    }
+
+    // Vẽ bằng ẢNH: sân (sân.png) + khung thành (goal.png)
+    private void drawField() {
+        playBackgroundMusic();
+        gamePane.getChildren().clear();
+
+        double paneWidth = gamePane.getWidth();
+        double paneHeight = gamePane.getHeight();
+        if (paneWidth <= 0 || paneHeight <= 0) { paneWidth = 600; paneHeight = 400; }
+
+        // ----- ẢNH NỀN SÂN ----- (ĐẶT FILE ở: resources/assets/ sân.png)
+        Image fieldImg = new Image(getClass().getResource("/assets/sân.png").toExternalForm());
+        fieldBgView = new ImageView(fieldImg);
+        fieldBgView.setFitWidth(paneWidth);
+        fieldBgView.setFitHeight(paneHeight);
+        fieldBgView.setPreserveRatio(false); // stretch full pane
+        fieldBgView.setLayoutX(0);
+        fieldBgView.setLayoutY(0);
+        gamePane.getChildren().add(fieldBgView); // luôn ở lớp dưới cùng
+
+        // ----- ẢNH KHUNG THÀNH ----- 
+        Image goalImg = new Image(getClass().getResource("/assets/goal.png").toExternalForm());
+        goalView = new ImageView(goalImg);
+        // scale khung thành: tối đa 60% bề ngang pane hoặc 260px (tùy bạn chỉnh)
+        double desiredGoalWidth = Math.min(paneWidth * 0.6, 260);
+        goalView.setFitWidth(desiredGoalWidth);
+        goalView.setPreserveRatio(true);
+        goalView.setLayoutX((paneWidth - goalView.getFitWidth()) / 2.0);
+        goalView.setLayoutY(-45); // cao bao nhiêu tùy ảnh; 10 là mép trên
+        gamePane.getChildren().add(goalView);
+
+        // Tính toán biên khung dựa theo ảnh đã đặt
+        currentGoalWidth = goalView.getBoundsInParent().getWidth();
+        currentGoalLeftX = goalView.getLayoutX();
+        currentGoalBottomY = goalView.getLayoutY() + goalView.getBoundsInParent().getHeight();
+
+        // ----- CẦU THỦ SÚT -----
+        player = createPlayer(paneWidth / 2, paneHeight - 50, "/assets/đá.png");
+        gamePane.getChildren().add(player);
+
+        // ----- THỦ MÔN: căn GIỮA khung (theo ảnh goal.png) -----
+        goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, "/assets/đỡ.png");
+        gamePane.getChildren().add(goalkeeper);
+
+        // ----- BÓNG (giữ logic bóng bằng Shape như cũ) -----
+        ball = createBall(paneWidth / 2, paneHeight - 120, 10);
+        gamePane.getChildren().add(ball);
+
+        // ----- BANNER THẮNG/THUA -----
+        Image image = new Image(getClass().getResource("/assets/c1cup.png").toExternalForm());
+        ImageView imageView = new ImageView(image);
+        imageView.setX(0); imageView.setY(20);
+        imageView.setFitWidth(image.getWidth() / 4); imageView.setFitHeight(image.getHeight() / 4);
+        Text winText = new Text("Bạn đã thắng!");
+        winText.setFill(Color.YELLOW); winText.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        winText.setX(imageView.getX() + 25); winText.setY(imageView.getY() + imageView.getFitHeight() + 30);
+        Text winText2 = new Text("Glory Man United!");
+        winText2.setFill(Color.YELLOW); winText2.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        winText2.setX(imageView.getX() + 5); winText2.setY(imageView.getY() + imageView.getFitHeight() + 60);
+        imageWinGroup = new Group(imageView, winText, winText2);
+        gamePane.getChildren().add(imageWinGroup);
+        enableWinGroup(false);
+
+        Image imageLose = new Image(getClass().getResource("/assets/loa.png").toExternalForm());
+        ImageView imageLoseView = new ImageView(imageLose);
+        imageLoseView.setX(25); imageLoseView.setY(20);
+        imageLoseView.setFitWidth(imageLose.getWidth() / 8); imageLoseView.setFitHeight(imageLose.getHeight() / 8);
+        Text loseText = new Text("Bạn đã thua!");
+        loseText.setFill(Color.YELLOW); loseText.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        loseText.setX(imageLoseView.getX()); loseText.setY(imageLoseView.getY() + imageLoseView.getFitHeight() + 20);
+        Text loseText2 = new Text("Tất cả vào hang!");
+        loseText2.setFill(Color.YELLOW); loseText2.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        loseText2.setX(imageLoseView.getX() - 20);
+        loseText2.setY(imageLoseView.getY() + imageLoseView.getFitHeight() + 50);
+        imageLoseGroup = new Group(imageLoseView, loseText, loseText2);
+        gamePane.getChildren().add(imageLoseGroup);
+        enableLoseGroup(false);
+    }
+
+    // =========================================================
+    //                 TẠO CÁC THÀNH PHẦN ĐỒ HỌA
+    // =========================================================
+    private Group createPlayer(double x, double y, String imgPath) {
+        Image img = new Image(getClass().getResourceAsStream(imgPath));
+        ImageView iv = new ImageView(img);
+        iv.setFitWidth(PLAYER_W + 10);
+        iv.setFitHeight(PLAYER_H + 10);
+        iv.setPreserveRatio(true);
+        iv.setLayoutX(x - iv.getFitWidth() / 2);
+        iv.setLayoutY(y - iv.getFitHeight());
+        return new Group(iv);
+    }
+
+    // Thủ môn: căn giữa theo ảnh goal.png (goalLeftX + goalWidth)
+    private Group createKeeper(double goalLeftX, double goalWidth, double footY, String direction) {
+        String imgPath;
+        if ("Left".equalsIgnoreCase(direction)) {
+            imgPath = "/assets/đỡleft.png";
+        } else if ("Right".equalsIgnoreCase(direction)) {
+            imgPath = "/assets/đỡright.png";
+        } else {
+            imgPath = "/assets/đỡ.png";
+        }
+        Image img = new Image(getClass().getResourceAsStream(imgPath));
+        ImageView iv = new ImageView(img);
+
+        double aspect = img.getWidth() / img.getHeight();
+        double dispH = KEEPER_H;
+        double dispW = dispH * aspect;
+
+        iv.setFitHeight(dispH);
+        iv.setFitWidth(dispW);
+        iv.setPreserveRatio(false);
+
+        iv.setLayoutX(goalLeftX + (goalWidth - dispW) / 2.0); // đúng giữa khung
+        iv.setLayoutY(footY - dispH);                          // chân đúng đáy lưới
+
+        keeperDisplayWidth = dispW;
+        return new Group(iv);
+    }
+
+    private Group createBall(double x, double y, double radius) {
+        Circle circle = new Circle(x, y, radius);
+        circle.setFill(Color.WHITE);
+        circle.setStroke(Color.BLACK);
+        ballCircle = circle;
+
+        Polygon pentagon = new Polygon();
+        double angle = -Math.PI / 2;
+        double angleIncrement = 2 * Math.PI / 5;
+        for (int i = 0; i < 5; i++) {
+            pentagon.getPoints().addAll(
+                    x + radius * 0.6 * Math.cos(angle),
+                    y + radius * 0.6 * Math.sin(angle));
+            angle += angleIncrement;
+        }
+        pentagon.setFill(Color.BLACK);
+        return new Group(circle, pentagon);
+    }
+
+    private SequentialTransition buildKickerMove() {
+        TranslateTransition stepIn = new TranslateTransition(KICK_IN_TIME, player);
+        stepIn.setByY(-KICK_STEP_Y);
+        TranslateTransition stepBack = new TranslateTransition(KICK_BACK_TIME, player);
+        stepBack.setByY(+KICK_STEP_Y);
+        return new SequentialTransition(stepIn, stepBack);
+    }
+
+    // =========================================================
+    //                CHAT/GUI HÀNH ĐỘNG NGƯỜI CHƠI
+    // =========================================================
+    @FXML
+    private void handleSendChat() throws IOException {
+        String message = chatInput.getText();
+        if (!message.isEmpty()) {
+            Message chatMessage = new Message("chat", message);
+            client.sendMessage(chatMessage);
+            chatInput.clear();
+        }
+    }
+
+    @FXML
+    private void handleShoot() {
+        ChoiceDialog<String> d = new ChoiceDialog<>("Middle", "Left", "Middle", "Right");
+        d.setTitle("Chọn Hướng Sút");
+        d.setHeaderText("Chọn hướng sút:");
+        d.setContentText("Hướng:");
+
+        Optional<String> result = d.showAndWait();
+        result.ifPresent(direction -> {
+            if (timeRemaining < 0) return;
+            try {
+                client.sendMessage(new Message("shoot", direction));
+                shootButton.setDisable(true);
+            } catch (IOException ex) {
+                Logger.getLogger(GameRoomController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        if (countdownTimeline != null) countdownTimeline.stop();
+    }
+
+    @FXML
+    private void handleGoalkeeper() {
+        ChoiceDialog<String> d = new ChoiceDialog<>("Middle", "Left", "Middle", "Right");
+        d.setTitle("Chọn Hướng Chặn");
+        d.setHeaderText("Chọn hướng chặn:");
+        d.setContentText("Hướng:");
+
+        Optional<String> result = d.showAndWait();
+        result.ifPresent(direction -> {
+            if (timeRemaining < 0) return;
+            try {
+                client.sendMessage(new Message("goalkeeper", direction));
+                goalkeeperButton.setDisable(true);
+            } catch (IOException ex) {
+                Logger.getLogger(GameRoomController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        if (countdownTimeline != null) countdownTimeline.stop();
+    }
+
+    public void updateChat(String message) {
+        Platform.runLater(() -> chatArea.appendText(message + "\n"));
+    }
+
+    // =========================================================
+    //                    ANIMATION KẾT QUẢ LƯỢT
+    // =========================================================
+    public void animateShootVao(String directShoot, String directKeeper) {
+        siuuuuuu.play();
+        Platform.runLater(() -> {
+            // Xóa thủ môn cũ và tạo lại thủ môn mới với ảnh đúng hướng
+            gamePane.getChildren().remove(goalkeeper);
+            goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, directKeeper);
+            gamePane.getChildren().add(goalkeeper);
+
+            Path path = new Path();
+            path.getElements().add(new MoveTo(ballCircle.getCenterX(), ballCircle.getCenterY()));
+            double targetX = ballCircle.getCenterX();
+            double targetY = ballCircle.getCenterY() - 210;
+            if (directShoot.equalsIgnoreCase("Left"))  targetX -= 90;
+            else if (directShoot.equalsIgnoreCase("Right")) targetX += 90;
+            path.getElements().add(new LineTo(targetX, targetY));
+
+            PathTransition ballFly = new PathTransition(Duration.seconds(1), path, ball);
+
+            double half = currentGoalWidth / 2.0;
+            double dx = half - (keeperDisplayWidth / 2.0) - 5;
+            double targetKeeperX = 0;
+            if (directKeeper.equalsIgnoreCase("Left"))  targetKeeperX = -dx;
+            else if (directKeeper.equalsIgnoreCase("Right")) targetKeeperX =  dx;
+            TranslateTransition keeperMove = new TranslateTransition(Duration.seconds(1), goalkeeper);
+            keeperMove.setByX(targetKeeperX);
+
+            SequentialTransition kickerMove = buildKickerMove();
+
+            ParallelTransition all = new ParallelTransition(ballFly, keeperMove, kickerMove);
+            all.setOnFinished(ev -> {
+                ball.setTranslateX(0); ball.setTranslateY(0);
+                goalkeeper.setTranslateX(0); goalkeeper.setTranslateY(0);
+                resetKeeperToDefault(); // Reset thủ môn về trạng thái mặc định
+            });
+            all.play();
+        });
+    }
+
+    public void animateShootKhongVao(String directShoot, String directKeeper) {
+        Platform.runLater(() -> {
+            // Xóa thủ môn cũ và tạo lại thủ môn mới với ảnh đúng hướng
+            gamePane.getChildren().remove(goalkeeper);
+            goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, directKeeper);
+            gamePane.getChildren().add(goalkeeper);
+
+            Path path = new Path();
+            path.getElements().add(new MoveTo(ballCircle.getCenterX(), ballCircle.getCenterY()));
+            double targetX = ballCircle.getCenterX();
+            double targetY = ballCircle.getCenterY() - 210;
+            if (directShoot.equalsIgnoreCase("Left"))  targetX -= 90;
+            else if (directShoot.equalsIgnoreCase("Right")) targetX += 90;
+            path.getElements().add(new LineTo(targetX, targetY));
+
+            double targetPathOutX = targetX, targetPathOutY = targetY - 25;
+            if (directKeeper.equalsIgnoreCase("Left"))      targetPathOutX -= 40;
+            else if (directKeeper.equalsIgnoreCase("Right")) targetPathOutX += 40;
+            else                                            targetPathOutY -= 40;
+
+            Path pathOut = new Path();
+            pathOut.getElements().add(new MoveTo(targetX, targetY));
+            pathOut.getElements().add(new LineTo(targetPathOutX, targetPathOutY));
+
+            PathTransition toGoal = new PathTransition(Duration.seconds(0.9), path, ball);
+            PathTransition bounceOut = new PathTransition(Duration.seconds(0.3), pathOut, ball);
+
+            double half = currentGoalWidth / 2.0;
+            double dx = half - (keeperDisplayWidth / 2.0) - 5;
+            double targetKeeperX = 0;
+            if (directKeeper.equalsIgnoreCase("Left"))  targetKeeperX = -dx;
+            else if (directKeeper.equalsIgnoreCase("Right")) targetKeeperX =  dx;
+
+            TranslateTransition keeperMove = new TranslateTransition(Duration.seconds(1), goalkeeper);
+            keeperMove.setByX(targetKeeperX);
+            keeperMove.setAutoReverse(false);
+
+            SequentialTransition kickerMove = buildKickerMove();
+
+            PauseTransition pause = new PauseTransition(Duration.seconds(2));
+            SequentialTransition ballAnim = directShoot.equalsIgnoreCase(directKeeper)
+                    ? new SequentialTransition(toGoal, bounceOut, pause)
+                    : new SequentialTransition(toGoal, pause);
+
+            ParallelTransition gameAnimation = new ParallelTransition(ballAnim, keeperMove, kickerMove);
+            gameAnimation.setOnFinished(event -> {
+                ball.setTranslateX(0); ball.setTranslateY(0);
+                goalkeeper.setTranslateX(0); goalkeeper.setTranslateY(0);
+                resetKeeperToDefault(); // Reset thủ môn về trạng thái mặc định
+            });
+            gameAnimation.play();
+        });
+    }
+
+    // =========================================================
+    //                 ĐIỀU KHIỂN LƯỢT/THỜI GIAN
+    // =========================================================
+    public void promptYourTurn(int durationInSeconds) {
+        Platform.runLater(() -> {
+            lastTurnDuration = durationInSeconds;
+            isMyTurn = true;
+            yourRole = "Shooter";
+            shootButton.setDisable(false);
+            goalkeeperButton.setDisable(true);
+            startCountdown(durationInSeconds);
+        });
+    }
+
+    public void promptGoalkeeperTurn(int durationInSeconds) {
+        Platform.runLater(() -> {
+            lastTurnDuration = durationInSeconds;
+            isMyTurn = true;
+            yourRole = "Goalkeeper";
+            goalkeeperButton.setDisable(false);
+            shootButton.setDisable(true);
+            startCountdown(durationInSeconds);
+        });
+    }
+
+    public void handleOpponentTurn(int durationInSeconds) {
+        Platform.runLater(() -> {
+            isMyTurn = false;
+            shootButton.setDisable(true);
+            goalkeeperButton.setDisable(true);
+            waitingForOpponentAction = yourRole.equals("Shooter") ? "goalkeeper"
+                    : yourRole.equals("Goalkeeper") ? "shoot" : "";
+            startCountdown(durationInSeconds);
+        });
+    }
+
+    // =========================================================
+    //                 THÔNG BÁO KẾT THÚC/CUỘC
+    // =========================================================
+    public void showRoundResult(String roundResult) {
+        siuuuuuu.play();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Kết Quả Lượt");
+            alert.setHeaderText(null);
+            alert.setContentText(roundResult);
+            alert.showAndWait();
+        });
+    }
+
+    public void endMatch(String result) {
+        if (mu != null) mu.stop();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Kết Thúc Trận Đấu");
+            alert.setHeaderText(null);
+            alert.setContentText(result);
+            alert.show();
+            PauseTransition delay = new PauseTransition(Duration.seconds(2));
+            delay.setOnFinished(event -> {
+                try { client.showMainUI(); } catch (Exception e) { e.printStackTrace(); }
+            });
+            delay.play();
+        });
+    }
+
+    public void handleRematchDeclined(String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Chơi Lại");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.show();
+            PauseTransition delay = new PauseTransition(Duration.seconds(2));
+            delay.setOnFinished(event -> {
+                try { client.showMainUI(); } catch (Exception e) { e.printStackTrace(); }
+            });
+            delay.play();
+        });
+    }
+
+    public void promptPlayAgain() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setTitle("Chơi Lại");
+            alert.setHeaderText(null);
+            alert.setContentText("Bạn có muốn chơi lại không?");
+            ButtonType yesButton = new ButtonType("Có", ButtonBar.ButtonData.YES);
+            ButtonType noButton  = new ButtonType("Không", ButtonBar.ButtonData.NO);
+            alert.getButtonTypes().setAll(yesButton, noButton);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent()) {
+                boolean playAgain = result.get() == yesButton;
+                try { client.sendMessage(new Message("play_again_response", playAgain)); } catch (IOException e) { e.printStackTrace(); }
+                if (!playAgain) {
+                    try { client.showMainUI(); } catch (Exception e) { e.printStackTrace(); }
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void handleQuitGame() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Thoát Trò Chơi");
+            alert.setHeaderText(null);
+            alert.setContentText("Bạn có chắc chắn muốn thoát trò chơi không?");
+            ButtonType yesButton = new ButtonType("Có", ButtonBar.ButtonData.YES);
+            ButtonType noButton  = new ButtonType("Không", ButtonBar.ButtonData.NO);
+            alert.getButtonTypes().setAll(yesButton, noButton);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == yesButton) {
+                Message quitMessage = new Message("quit_game", null);
+                try {
+                    client.sendMessage(quitMessage);
+                    client.showMainUI();
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+        });
+    }
+
+    public void showStartMessage(String message) {
+        Platform.runLater(() -> {
+            if (message.contains("người sút")) {
+                yourRole = "Shooter";
+                promptYourTurn(TURN_TIMEOUT); // Enable nút Sút ngay khi vào phòng
+            }
+            else if (message.contains("người bắt")) {
+                yourRole = "Goalkeeper";
+                promptGoalkeeperTurn(TURN_TIMEOUT); // Enable nút Chặn ngay khi vào phòng
+            }
+        });
+    }
+
+    public void showMatchResult(String result) {
+        Platform.runLater(() -> {
+            if (result.equals("win")) { enableWinGroup(true); enableLoseGroup(false); }
+            else if (result.equals("lose")) { enableLoseGroup(true); enableWinGroup(false); }
+            if (countdownTimeline != null) countdownTimeline.stop();
+            timerLabel.setText("Kết thúc trận đấu!");
+        });
+    }
+
+    public void handleTimeout(String message) {
+        Platform.runLater(() -> {
+            isMyTurn = false;
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Hết giờ");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.show();
+            shootButton.setDisable(true);
+            goalkeeperButton.setDisable(true);
+            waitingForOpponentAction = yourRole.equals("Shooter") ? "goalkeeper" : "shoot";
+            startCountdown(TURN_TIMEOUT);
+        });
+    }
+
+    public void handleOpponentTimeout(String message) {
+        Platform.runLater(() -> {
+            if (countdownTimeline != null) countdownTimeline.stop();
+            isMyTurn = true;
+            waitingForOpponentAction = "";
+            if (yourRole.equals("Shooter")) shootButton.setDisable(false);
+            else if (yourRole.equals("Goalkeeper")) goalkeeperButton.setDisable(false);
+            startCountdown(TURN_TIMEOUT);
+        });
+    }
+
+    // =========================================================
+    //               ÂM THANH + ĐỒNG HỒ ĐẾM NGƯỢC
+    // =========================================================
+    private void playBackgroundMusic() {
+        siuuuuuu = new AudioClip(getClass().getResource("/sound/siuuu.wav").toExternalForm());
+        mu = new AudioClip(getClass().getResource("/sound/mu.wav").toExternalForm());
+        mu.setCycleCount(AudioClip.INDEFINITE);
+        mu.setVolume(0.15f);
+        mu.play();
+    }
+
+    private void startCountdown(int durationInSeconds) {
+        timeRemaining = durationInSeconds;
+        if (countdownTimeline != null) countdownTimeline.stop();
+
+        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            final String action = isMyTurn ? "Thời gian còn lại: " : "Đang chờ đối thủ: ";
+            timerLabel.setText(action + timeRemaining + " giây");
+            timeRemaining--;
+
+            if (timeRemaining < 0) {
+                countdownTimeline.stop();
+                dialog.close();
+                timerLabel.setText(action + "0 giây");
+                shootButton.setDisable(true);
+                goalkeeperButton.setDisable(true);
+                try {
+                    if (yourRole.equals("Shooter")) client.sendMessage(new Message("timeout", "shooter"));
+                    else if (yourRole.equals("Goalkeeper")) client.sendMessage(new Message("timeout", "goalkeeper"));
+                } catch (IOException ex) {
+                    Logger.getLogger(GameRoomController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                isMyTurn = false;
+            }
+        }));
+        countdownTimeline.setCycleCount(durationInSeconds + 1);
+        countdownTimeline.play();
+
+        final String action = isMyTurn ? "Thời gian còn lại: " : "Đang chờ đối thủ: ";
+        timerLabel.setText(action + timeRemaining + " giây");
+    }
+
+    // =========================================================
+    //                BANNER THẮNG/THUA HELPERS
+    // =========================================================
+    private void enableWinGroup(boolean enable) { imageWinGroup.setVisible(enable); }
+    private void enableLoseGroup(boolean enable) { imageLoseGroup.setVisible(enable); }
+
+    // Reset thủ môn về trạng thái mặc định (không nghiêng)
+    private void resetKeeperToDefault() {
+        gamePane.getChildren().remove(goalkeeper);
+        goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, "Middle");
+        gamePane.getChildren().add(goalkeeper);
+    }
+}
