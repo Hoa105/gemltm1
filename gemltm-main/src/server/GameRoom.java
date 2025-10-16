@@ -18,7 +18,7 @@ public class GameRoom {
     private int shooterScore; 	
     private int goalkeeperScore;
     private int currentRound;
-    private final int MAX_ROUNDS = 6;
+    private final int MAX_ROUNDS = 10;
     private final int WIN_SCORE = 3;
     private String shooterDirection;
     private Boolean shooterWantsRematch = null;
@@ -80,6 +80,9 @@ public class GameRoom {
                 endMatch();
                 return;
             }
+            Message roundMessage = new Message("round_start", "Bắt đầu Round " + currentRound);
+            shooterHandler.sendMessage(roundMessage);
+            goalkeeperHandler.sendMessage(roundMessage);
             if (isShooter) {
                 shooterHandler
                         .sendMessage(
@@ -96,6 +99,7 @@ public class GameRoom {
                 isShooter = true;
             }
             shooterActionReceived = false;
+            goalkeeperActionReceived = false;
             shooterDirection = null;
             goalkeeperDirection = null; // Đặt lại biến này cho lượt mới
 
@@ -198,12 +202,12 @@ public class GameRoom {
 
         if (shooterScore > goalkeeperScore) {
             winnerId = shooterHandler.getUser().getId();
-            resultMessage = shooterHandler.getUser().getUsername() + " thắng trận đấu!";
+            resultMessage = shooterHandler.getUser().getUsername() + " thắng trận đấu với tỉ số " + shooterScore + " - " + goalkeeperScore ;
         } else if (goalkeeperScore > shooterScore) {
             winnerId = goalkeeperHandler.getUser().getId();
-            resultMessage = goalkeeperHandler.getUser().getUsername() + " thắng trận đấu!";
+            resultMessage = goalkeeperHandler.getUser().getUsername() + " thắng trận đấu với tỉ số " + goalkeeperScore + " - " + shooterScore;
         } else {
-            resultMessage = "Trận đấu hòa!";
+            resultMessage = "Trận đấu hòa! " + shooterScore + " - " + goalkeeperScore;
         }
 
         if (winnerId != 0) {
@@ -296,6 +300,22 @@ public class GameRoom {
     // Đảm bảo rằng phương thức endMatch() tồn tại và được định nghĩa chính xác
     private void endMatch() throws SQLException, IOException {
         determineWinner();
+        String result;
+        if (shooterScore > goalkeeperScore) {
+            result = shooterHandler.getUser().getUsername() + " thắng " + goalkeeperHandler.getUser().getUsername() + 
+                     " với tỉ số " + shooterScore + " - " + goalkeeperScore;
+        } else if (goalkeeperScore > shooterScore) {
+            result = goalkeeperHandler.getUser().getUsername() + " thắng " + shooterHandler.getUser().getUsername() + 
+                     " với tỉ số " + goalkeeperScore + " - " + shooterScore;
+        } else {
+            result = "Hòa! Tỉ số " + goalkeeperScore + " - " + shooterScore;
+        }
+
+        // Gửi kết quả cho cả 2 người chơi
+
+//        // Lưu vào CSDL nếu cần
+//        dbManager.saveMatchResult(shooterHandler.getUser().getId(), goalkeeperHandler.getUser().getId(),
+//        		shooterScore, goalkeeperScore);
 
         // Reset in-game status for both players after match
         if (shooterHandler != null) {
@@ -451,14 +471,7 @@ public class GameRoom {
     }
 
     private boolean checkEndGame() {
-        int scoreDifference = Math.abs(shooterScore - goalkeeperScore);
-        int turnLeftshooter = (shooterScore >= WIN_SCORE) ? 0 : WIN_SCORE - ((currentRound / 2));
-        int turnLeftgoalkeeper = (goalkeeperScore >= WIN_SCORE) ? 0 : WIN_SCORE - (((currentRound - 1) / 2));
-        System.out.println(turnLeftshooter + " " + turnLeftgoalkeeper + " " + scoreDifference + " " + currentRound);
-        return ((turnLeftshooter < scoreDifference) && shooterScore < goalkeeperScore) ||
-                ((turnLeftgoalkeeper < scoreDifference) && goalkeeperScore < shooterScore)
-                || ((currentRound > MAX_ROUNDS || shooterScore >= WIN_SCORE || goalkeeperScore >= WIN_SCORE)
-                        && currentRound % 2 == 0 && shooterScore != goalkeeperScore);
+    	return currentRound > MAX_ROUNDS;
     }
 
     public void startGoalkeeperTimeout() {
