@@ -148,11 +148,19 @@ public class GameRoom {
         if (goal) {
             // Người sút ghi bàn thì cộng điểm cho shooter
             shooterScore++;
+        } else {
+            // Thủ môn bắt được bóng thì cộng điểm cho goalkeeper
+            goalkeeperScore++;
         }
 
-        String kick_result = (goal ? "win" : "lose") + "-" + shooterDirection + "-" + goalkeeperDirection;
-        shooterHandler.sendMessage(new Message("kick_result", kick_result));
-        goalkeeperHandler.sendMessage(new Message("kick_result", kick_result));
+        // Gửi kết quả riêng cho từng người theo góc nhìn của họ
+        // Shooter: "win" nếu ghi bàn, "lose" nếu bị bắt
+        String kick_result_shooter = (goal ? "win" : "lose") + "-" + shooterDirection + "-" + goalkeeperDirection;
+        // Goalkeeper: "win" nếu bắt được, "lose" nếu thủng lưới
+        String kick_result_goalkeeper = (goal ? "lose" : "win") + "-" + shooterDirection + "-" + goalkeeperDirection;
+        
+        shooterHandler.sendMessage(new Message("kick_result", kick_result_shooter));
+        goalkeeperHandler.sendMessage(new Message("kick_result", kick_result_goalkeeper));
 
         // Lưu chi tiết trận đấu vào database
         dbManager.saveMatchDetails(matchId, currentRound,

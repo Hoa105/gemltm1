@@ -11,6 +11,42 @@
 - **MAX_ROUNDS**: 6 → 10 (tổng 10 rounds)
 - **WIN_SCORE**: 3 → 10 (không còn dùng điều kiện thắng sớm)
 
+#### Sửa logic tính điểm (QUAN TRỌNG!)
+**Trước:** Chỉ cộng điểm cho shooter khi ghi bàn, goalkeeper không được điểm khi bắt bóng ❌
+```java
+if (goal) {
+    shooterScore++;  // Chỉ có dòng này
+}
+```
+
+**Sau:** Cả hai đều được điểm ✅
+```java
+if (goal) {
+    shooterScore++;      // Shooter ghi bàn: +1 điểm
+} else {
+    goalkeeperScore++;   // Goalkeeper bắt được: +1 điểm
+}
+```
+
+#### Sửa hiển thị kết quả (QUAN TRỌNG!)
+**Trước:** Gửi cùng 1 message cho cả 2 người → Hiển thị sai ❌
+```java
+String kick_result = (goal ? "win" : "lose") + "-" + ...;
+shooterHandler.sendMessage(new Message("kick_result", kick_result));
+goalkeeperHandler.sendMessage(new Message("kick_result", kick_result));
+```
+
+**Sau:** Gửi message riêng theo góc nhìn của từng người ✅
+```java
+// Shooter: "win" nếu ghi bàn, "lose" nếu bị bắt
+String kick_result_shooter = (goal ? "win" : "lose") + "-" + ...;
+// Goalkeeper: "win" nếu bắt được, "lose" nếu thủng lưới  
+String kick_result_goalkeeper = (goal ? "lose" : "win") + "-" + ...;
+
+shooterHandler.sendMessage(new Message("kick_result", kick_result_shooter));
+goalkeeperHandler.sendMessage(new Message("kick_result", kick_result_goalkeeper));
+```
+
 #### Logic đổi vai trò mới
 - **Method mới `swapRoles()`**: Đổi vai trò giữa shooter và goalkeeper sau mỗi round
   - Hoán đổi shooterHandler ↔ goalkeeperHandler
