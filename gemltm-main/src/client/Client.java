@@ -20,6 +20,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URL;
 import java.util.List;
+import java.util.Arrays;
 
 public class Client {
 
@@ -53,9 +54,11 @@ public class Client {
     public void startConnection(String address, int port) {
         try {
             socket = new Socket(address, port);
-            in = new ObjectInputStream(socket.getInputStream());
+            // Important: create ObjectOutputStream first, then ObjectInputStream.
+            // If both sides create ObjectInputStream first, they can deadlock.
             out = new ObjectOutputStream(socket.getOutputStream());
             out.flush();
+            in = new ObjectInputStream(socket.getInputStream());
             isRunning = true; // Đặt lại isRunning thành true
             listenForMessages();
         } catch (IOException e) {
@@ -65,13 +68,15 @@ public class Client {
     }
 
     private void listenForMessages() {
-        new Thread(() -> {
+        Thread listener = new Thread(() -> {
             try {
                 while (isRunning) {
                     Message message = (Message) in.readObject();
-                    if (message != null) {
-                        handleMessage(message);
+                    if (message == null) {
+                        System.out.println("Received null message, ignoring.");
+                        continue;
                     }
+                    handleMessage(message);
                 }
             } catch (IOException | ClassNotFoundException ex) {
                 if (isRunning) {
@@ -93,14 +98,44 @@ public class Client {
                     System.out.println("Đã đóng kết nối, dừng luồng lắng nghe.");
                 }
             }
-        }).start();
+        });
+        listener.setDaemon(true); // không chặn JVM thoát
+        listener.start();
+    }
+
+    // Tiện ích chuyển đổi an toàn sang int[]
+    private int[] toIntArray(Object o) {
+        if (o == null) return null;
+        if (o instanceof int[]) return (int[]) o;
+        if (o instanceof Integer[]) {
+            Integer[] arr = (Integer[]) o;
+            int[] res = new int[arr.length];
+            for (int i = 0; i < arr.length; i++) res[i] = arr[i] == null ? 0 : arr[i];
+            return res;
+        }
+        if (o instanceof List) {
+            List<?> list = (List<?>) o;
+            int[] res = new int[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                Object it = list.get(i);
+                if (it instanceof Number) res[i] = ((Number) it).intValue();
+                else {
+                    System.out.println("Warning: non-number in scores list: " + it);
+                    res[i] = 0;
+                }
+            }
+            return res;
+        }
+        System.out.println("Warning: cannot convert to int[]: " + o);
+        return null;
     }
 
     private void handleMessage(Message message) {
-        System.out.println("Received message: " + message.getType() + " - " + message.getContent());
         if (message == null) {
+            System.out.println("handleMessage called with null message, ignoring.");
             return;
         }
+        System.out.println("Received message: " + message.getType() + " - " + message.getContent());
         switch (message.getType()) {
             case "login_success":
                 this.user = (User) message.getContent();
@@ -129,9 +164,14 @@ public class Client {
                 });
                 break;
             case "match_request":
+                final Object matchReqContent = message.getContent();
                 Platform.runLater(() -> {
                     if (mainController != null) {
-                        mainController.showMatchRequest((int) message.getContent());
+                        if (matchReqContent instanceof Integer) {
+                            mainController.showMatchRequest((Integer) matchReqContent);
+                        } else {
+                            System.out.println("Warning: match_request content not Integer: " + matchReqContent);
+                        }
                     }
                 });
                 break;
@@ -150,18 +190,29 @@ public class Client {
                 });
                 break;
             case "match_start":
+                final Object matchStartContent = message.getContent();
                 Platform.runLater(() -> {
-                    showGameRoomUI((String) message.getContent());
+                    if (matchStartContent instanceof String) showGameRoomUI((String) matchStartContent);
+                    else System.out.println("Warning: match_start content not String: " + matchStartContent);
                 });
                 break;
             case "kick_result":
                 Platform.runLater(() -> {
                     if (gameRoomController != null) {
-                        String[] result = ((String) message.getContent()).split("-");
-                        if (result[0].equals("win")) {
+                        final Object payloadObj = message.getContent();
+                        if (!(payloadObj instanceof String)) {
+                            System.out.println("Warning: kick_result payload is not String: " + payloadObj);
+                            return;
+                        }
+                        String payload = (String) payloadObj;
+                        String[] result = payload.split("-");
+                        System.out.println("Received kick_result payload: " + payload + " -> parsed: " + Arrays.toString(result));
+                        if (result.length >= 3 && result[0].equals("win")) {
                             gameRoomController.animateShootVao(result[1], result[2]);
-                        } else {
+                        } else if (result.length >= 3) {
                             gameRoomController.animateShootKhongVao(result[1], result[2]);
+                        } else {
+                            System.out.println("Warning: unexpected kick_result format: " + payload);
                         }
                     }
                 });
@@ -230,7 +281,10 @@ public class Client {
                 break;
 
             case "update_score":
-                int[] scores = (int[]) message.getContent();
+                final Object scoresObj = message.getContent();
+                int[] scores = toIntArray(scoresObj);
+                System.out.println("Client user=" + (user != null ? user.getUsername() : "(not-set)")
+                        + " Received update_score array: " + Arrays.toString(scores));
                 Platform.runLater(() -> {
                     if (gameRoomController != null) {
                         gameRoomController.updateScore(scores);
@@ -255,29 +309,44 @@ public class Client {
                 break;
 
             case "your_turn":
-                int duration = (int) message.getContent();
-                Platform.runLater(() -> {
-                    if (gameRoomController != null) {
-                        gameRoomController.promptYourTurn(duration);
-                    }
-                });
+                final Object yourTurnObj = message.getContent();
+                if (yourTurnObj instanceof Integer) {
+                    int duration = (Integer) yourTurnObj;
+                    Platform.runLater(() -> {
+                        if (gameRoomController != null) {
+                            gameRoomController.promptYourTurn(duration);
+                        }
+                    });
+                } else {
+                    System.out.println("Warning: your_turn content not Integer: " + yourTurnObj);
+                }
                 break;
             case "goalkeeper_turn":
-                int duration1 = (int) message.getContent();
-                Platform.runLater(() -> {
-                    if (gameRoomController != null) {
-                        gameRoomController.promptGoalkeeperTurn(duration1);
-                    }
-                });
+                final Object gkTurnObj = message.getContent();
+                if (gkTurnObj instanceof Integer) {
+                    int duration1 = (Integer) gkTurnObj;
+                    Platform.runLater(() -> {
+                        if (gameRoomController != null) {
+                            gameRoomController.promptGoalkeeperTurn(duration1);
+                        }
+                    });
+                } else {
+                    System.out.println("Warning: goalkeeper_turn content not Integer: " + gkTurnObj);
+                }
                 break;
 
             case "opponent_turn":
-                int duration2 = (int) message.getContent();
-                Platform.runLater(() -> {
-                    if (gameRoomController != null) {
-                        gameRoomController.handleOpponentTurn(duration2);
-                    }
-                });
+                final Object oppTurnObj = message.getContent();
+                if (oppTurnObj instanceof Integer) {
+                    int duration2 = (Integer) oppTurnObj;
+                    Platform.runLater(() -> {
+                        if (gameRoomController != null) {
+                            gameRoomController.handleOpponentTurn(duration2);
+                        }
+                    });
+                } else {
+                    System.out.println("Warning: opponent_turn content not Integer: " + oppTurnObj);
+                }
                 break;
                 
             case "timeout":
@@ -294,6 +363,14 @@ public class Client {
                     }
                 });
                 break;
+            
+            case "role_change":
+                Platform.runLater(() -> {
+                    if (gameRoomController != null) {
+                        gameRoomController.handleRoleChange((String) message.getContent());
+                    }
+                });
+                break;
 
 
 
@@ -303,7 +380,7 @@ public class Client {
     }
 
     public void sendMessage(Message message) throws IOException {
-    	
+        
         out.writeObject(message);
         out.flush();
     }

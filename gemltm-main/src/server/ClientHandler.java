@@ -3,13 +3,12 @@ package server;
 import common.Match;
 import common.MatchDetails;
 import common.Message;
+import common.Pair;
 import common.User;
-
 import java.io.*;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.List;
-import javafx.util.Pair;
 
 public class ClientHandler implements Runnable {
     private Socket socket;
@@ -250,10 +249,10 @@ public class ClientHandler implements Runnable {
                 this.user.setStatus("ingame");
                 requester.user.setStatus("ingame");
 
-                dbManager.updateUserStatus(user.getId(), "ingame");
-                requester.dbManager.updateUserStatus(user.getId(), "ingame");
+                dbManager.updateUserStatus(this.user.getId(), "ingame");
+                dbManager.updateUserStatus(requester.user.getId(), "ingame");
 
-                server.broadcast(new Message("status_update", user.getUsername() + " is ingame"));
+                server.broadcast(new Message("status_update", this.user.getUsername() + " is ingame"));
                 server.broadcast(new Message("status_update", requester.user.getUsername() + " is ingame"));
 
                 newGameRoom.startMatch();

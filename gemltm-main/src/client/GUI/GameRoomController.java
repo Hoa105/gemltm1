@@ -27,7 +27,11 @@ import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameRoomController {
 
@@ -97,16 +101,24 @@ public class GameRoomController {
     private String yourRole = "";
     private boolean isMyTurn = false;
     private String waitingForOpponentAction = "";
+    private List<Rectangle> goalZones = new ArrayList<>();
 
     // =========================================================
     //                 CẬP NHẬT ĐIỂM LÊN UI
     // =========================================================
     public void updateScore(int[] scores) {
+        // Debug: print received scores and which user this controller belongs to (if set)
+        String userName = (client != null && client.getUser() != null) ? client.getUser().getUsername() : "(unknown)";
+        System.out.println("[GameRoomController] user=" + userName + " updateScore received: " + java.util.Arrays.toString(scores));
         Platform.runLater(() -> {
+            if (scoreLabel == null) {
+                System.out.println("[GameRoomController] scoreLabel is null for user=" + userName);
+                return;
+            }
             int yourScore = scores[0];
             int opponentScore = scores[1];
             int currentRound = scores[2];
-            scoreLabel.setText("Round: " + (currentRound + 1) + "         Bạn: " + yourScore
+            scoreLabel.setText("Round: " + currentRound + "         Bạn: " + yourScore
                     + "   -   Đối thủ: " + opponentScore);
         });
     }
@@ -118,11 +130,14 @@ public class GameRoomController {
     // =========================================================
     @FXML
     private void initialize() {
-        shootButton.setDisable(true);
-        goalkeeperButton.setDisable(true);
+        shootButton.setDisable(false);
+        goalkeeperButton.setDisable(false);
         if (timerLabel != null) timerLabel.setText("Thời gian còn lại: 0 giây");
         Platform.runLater(this::drawField);
         if (scoreLabel != null) scoreLabel.setText("Round: 1         Bạn: 0   -   Đối thủ: 0");
+     // Sau khi mọi thứ khung thành, bóng, thủ môn được thêm
+        createGoalZones();
+        Platform.runLater(() -> createGoalZones());
     }
 
     // Vẽ bằng ẢNH: sân (sân.png) + khung thành (goal.png)
@@ -296,7 +311,9 @@ public class GameRoomController {
         result.ifPresent(direction -> {
             if (timeRemaining < 0) return;
             try {
-                client.sendMessage(new Message("shoot", direction));
+                // Ensure we send normalized direction tokens
+                String dir = normalizeDirection(direction);
+                client.sendMessage(new Message("shoot", dir));
                 shootButton.setDisable(true);
             } catch (IOException ex) {
                 Logger.getLogger(GameRoomController.class.getName()).log(Level.SEVERE, null, ex);
@@ -316,13 +333,23 @@ public class GameRoomController {
         result.ifPresent(direction -> {
             if (timeRemaining < 0) return;
             try {
-                client.sendMessage(new Message("goalkeeper", direction));
+                String dir = normalizeDirection(direction);
+                client.sendMessage(new Message("goalkeeper", dir));
                 goalkeeperButton.setDisable(true);
             } catch (IOException ex) {
                 Logger.getLogger(GameRoomController.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
         if (countdownTimeline != null) countdownTimeline.stop();
+    }
+
+    // Ensure dialog strings are normalized to Left/Middle/Right
+    private String normalizeDirection(String dir) {
+        if (dir == null) return "Middle";
+        dir = dir.trim().toLowerCase();
+        if (dir.contains("left")) return "Left";
+        if (dir.contains("right")) return "Right";
+        return "Middle";
     }
 
     public void updateChat(String message) {
@@ -550,14 +577,17 @@ public class GameRoomController {
 
     public void showStartMessage(String message) {
         Platform.runLater(() -> {
+            // Only show role; real turn prompts come from server via your_turn/goalkeeper_turn
             if (message.contains("người sút")) {
                 yourRole = "Shooter";
-                promptYourTurn(TURN_TIMEOUT); // Enable nút Sút ngay khi vào phòng
-            }
-            else if (message.contains("người bắt")) {
+            } else if (message.contains("người bắt")) {
                 yourRole = "Goalkeeper";
-                promptGoalkeeperTurn(TURN_TIMEOUT); // Enable nút Chặn ngay khi vào phòng
             }
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Vai trò");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.show();
         });
     }
 
@@ -593,6 +623,29 @@ public class GameRoomController {
             if (yourRole.equals("Shooter")) shootButton.setDisable(false);
             else if (yourRole.equals("Goalkeeper")) goalkeeperButton.setDisable(false);
             startCountdown(TURN_TIMEOUT);
+        });
+    }
+    
+    public void handleRoleChange(String message) {
+        Platform.runLater(() -> {
+            // Cập nhật vai trò mới dựa vào thông báo từ server
+            if (message.contains("người sút")) {
+                yourRole = "Shooter";
+            } else if (message.contains("người bắt")) {
+                yourRole = "Goalkeeper";
+            }
+            
+            // Hiển thị thông báo đổi vai trò
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Đổi vai trò");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.show();
+            
+            // Reset trạng thái nút
+            shootButton.setDisable(true);
+            goalkeeperButton.setDisable(true);
+            isMyTurn = false;
         });
     }
 
@@ -650,4 +703,73 @@ public class GameRoomController {
         goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, "Middle");
         gamePane.getChildren().add(goalkeeper);
     }
+    
+    private void createGoalZones() {
+        // Xóa các ô cũ nếu có
+        gamePane.getChildren().removeIf(node -> {
+            return node instanceof Rectangle && node.getId() != null && node.getId().startsWith("goalZone");
+        });
+
+        double paneW = gamePane.getWidth();
+        double paneH = gamePane.getHeight();
+        // Bạn có thể điều chỉnh các giá trị sau để ô khớp khung thành của bạn
+        double goalWidth = paneW * 0.6;  // 60% chiều ngang pane
+        double goalHeight = 200;         // cố định cao khung thành
+        double startX = (paneW - goalWidth) / 2.0;
+        double startY = 100;  // khoảng cách từ trên pane tới khung thành (tùy bạn điều chỉnh)
+
+        int rows = 2;
+        int cols = 3;
+        double cellW = goalWidth / cols;
+        double cellH = goalHeight / rows;
+
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                Rectangle rect = new Rectangle(startX + c * cellW, startY + r * cellH, cellW, cellH);
+                rect.setId("goalZone_" + r + "_" + c);
+                rect.setFill(Color.rgb(255, 255, 255, 0.1));
+                rect.setStroke(Color.WHITE);
+                rect.setStrokeWidth(1);
+
+                // Hover effect
+                rect.setOnMouseEntered(e -> rect.setFill(Color.rgb(0, 255, 0, 0.3)));
+                rect.setOnMouseExited(e -> rect.setFill(Color.rgb(255, 255, 255, 0.1)));
+
+                final int rr = r;
+                final int cc = c;
+                rect.setOnMouseClicked(e -> handleZoneClick(rr, cc));
+
+                goalZones.add(rect);
+                gamePane.getChildren().add(rect);
+            }
+        }
+    }
+
+    private void handleZoneClick(int row, int col) {
+        if (!isMyTurn) {
+            return;
+        }
+        // Map clicked zone to server-expected directions: Left / Middle / Right
+        String area = convertZoneToDirection(row, col);
+        try {
+            if (yourRole.equals("Shooter")) {
+                client.sendMessage(new Message("shoot", area));
+            } else if (yourRole.equals("Goalkeeper")) {
+                client.sendMessage(new Message("goalkeeper", area));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        isMyTurn = false;
+    }
+
+    private String convertZoneToDirection(int row, int col) {
+        // Normalize mapping to the server's expected simple directions
+        // Use column only: 0 -> Left, 1 -> Middle, 2 -> Right
+        if (col == 0) return "Left";
+        if (col == 1) return "Middle";
+        if (col == 2) return "Right";
+        return "Middle";
+    }
+
 }

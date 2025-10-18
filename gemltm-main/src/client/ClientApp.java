@@ -13,16 +13,19 @@ public class ClientApp extends Application {
             Client client = new Client(primaryStage);
             client.showLoginUI();
 
-            // Chạy kết nối server trên một luồn2g riêng để tránh làm đóng băng giao diện
-            new Thread(() -> {
+            // Chạy kết nối server trên một luồng riêng để tránh làm đóng băng giao diện
+            Thread connThread = new Thread(() -> {
                 try {
                     // Thay "localhost" bằng địa chỉ IP của server nếu cần
                     client.startConnection("localhost", 12345);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    client.showErrorAlert("Không thể kết nối tới server.");
+                    // Gọi UI phải được thực hiện trên JavaFX Application Thread
+                    Platform.runLater(() -> client.showErrorAlert("Không thể kết nối tới server."));
                 }
-            }).start();
+            });
+            connThread.setDaemon(true);
+            connThread.start();
 
             // Thêm event handler cho việc đóng ứng dụng
             primaryStage.setOnCloseRequest(event -> {

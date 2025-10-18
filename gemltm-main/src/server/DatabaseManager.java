@@ -1,13 +1,12 @@
 package server;
 
 import common.Match;
-import common.User;
 import common.MatchDetails;
-
+import common.Pair;
+import common.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.util.Pair;
 
 public class DatabaseManager {
 
