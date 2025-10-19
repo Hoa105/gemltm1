@@ -149,26 +149,31 @@ public class GameRoomController {
         double paneHeight = gamePane.getHeight();
         if (paneWidth <= 0 || paneHeight <= 0) { paneWidth = 600; paneHeight = 400; }
 
-        // ----- ẢNH NỀN SÂN ----- (ĐẶT FILE ở: resources/assets/ sân.png)
+        // ----- ẢNH NỀN SÂN -----
         Image fieldImg = new Image(getClass().getResource("/assets/sân.png").toExternalForm());
         fieldBgView = new ImageView(fieldImg);
         fieldBgView.setFitWidth(paneWidth);
         fieldBgView.setFitHeight(paneHeight);
-        fieldBgView.setPreserveRatio(false); // stretch full pane
+        fieldBgView.setPreserveRatio(false);
         fieldBgView.setLayoutX(0);
         fieldBgView.setLayoutY(0);
-        gamePane.getChildren().add(fieldBgView); // luôn ở lớp dưới cùng
+        gamePane.getChildren().add(fieldBgView);
 
-        // ----- ẢNH KHUNG THÀNH ----- 
-        Image goalImg = new Image(getClass().getResource("/assets/goal.png").toExternalForm());
-        goalView = new ImageView(goalImg);
-        // scale khung thành: tối đa 60% bề ngang pane hoặc 260px (tùy bạn chỉnh)
-        double desiredGoalWidth = Math.min(paneWidth * 0.6, 260);
-        goalView.setFitWidth(desiredGoalWidth);
-        goalView.setPreserveRatio(true);
-        goalView.setLayoutX((paneWidth - goalView.getFitWidth()) / 2.0);
-        goalView.setLayoutY(-45); // cao bao nhiêu tùy ảnh; 10 là mép trên
-        gamePane.getChildren().add(goalView);
+    // ----- KHUNG 6 Ô -----
+    // Tăng kích thước, vẫn nằm cao
+    double gridWidth = Math.min(paneWidth * 0.68, 320); // to hơn
+    double gridHeight = 170; // cao hơn
+    double gridStartX = (paneWidth - gridWidth) / 2.0; // left edge for both grid and goal
+    double gridStartY = 30; // vẫn nằm cao
+
+    // ----- ẢNH KHUNG THÀNH -----
+    Image goalImg = new Image(getClass().getResource("/assets/goal.png").toExternalForm());
+    goalView = new ImageView(goalImg);
+    goalView.setFitWidth(gridWidth); // khung thành bằng khung 6 ô
+    goalView.setPreserveRatio(true);
+    goalView.setLayoutX(gridStartX); // left edge of goal matches grid
+    goalView.setLayoutY(gridStartY - 90); // đẩy khung thành lên cao thêm 20px nữa
+    gamePane.getChildren().add(goalView);
 
         // Tính toán biên khung dựa theo ảnh đã đặt
         currentGoalWidth = goalView.getBoundsInParent().getWidth();
@@ -179,11 +184,12 @@ public class GameRoomController {
         player = createPlayer(paneWidth / 2, paneHeight - 50, "/assets/đá.png");
         gamePane.getChildren().add(player);
 
-        // ----- THỦ MÔN: căn GIỮA khung (theo ảnh goal.png) -----
-        goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, "/assets/đỡ.png");
-        gamePane.getChildren().add(goalkeeper);
+    // ----- THỦ MÔN: căn giữa khung thành mới -----
+    double keeperY = currentGoalBottomY - 10; // thủ môn nằm sát mép dưới khung thành
+    goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, keeperY, "/assets/đỡ.png");
+    gamePane.getChildren().add(goalkeeper);
 
-        // ----- BÓNG (giữ logic bóng bằng Shape như cũ) -----
+        // ----- BÓNG -----
         ball = createBall(paneWidth / 2, paneHeight - 120, 10);
         gamePane.getChildren().add(ball);
 
@@ -608,21 +614,21 @@ public class GameRoomController {
             alert.setHeaderText(null);
             alert.setContentText(message);
             alert.show();
+            // Round sẽ được server kết thúc ngay sau khi timeout, không khởi động countdown mới
             shootButton.setDisable(true);
             goalkeeperButton.setDisable(true);
-            waitingForOpponentAction = yourRole.equals("Shooter") ? "goalkeeper" : "shoot";
-            startCountdown(TURN_TIMEOUT);
+            timerLabel.setText("Hết giờ - đang xử lý kết quả...");
         });
     }
 
     public void handleOpponentTimeout(String message) {
         Platform.runLater(() -> {
             if (countdownTimeline != null) countdownTimeline.stop();
-            isMyTurn = true;
-            waitingForOpponentAction = "";
-            if (yourRole.equals("Shooter")) shootButton.setDisable(false);
-            else if (yourRole.equals("Goalkeeper")) goalkeeperButton.setDisable(false);
-            startCountdown(TURN_TIMEOUT);
+            // Đối thủ hết giờ: server sẽ tự kết thúc round và gửi kết quả, không bật nút hay countdown ở client
+            isMyTurn = false;
+            shootButton.setDisable(true);
+            goalkeeperButton.setDisable(true);
+            timerLabel.setText("Đối thủ hết giờ - đang xử lý kết quả...");
         });
     }
     
@@ -712,20 +718,39 @@ public class GameRoomController {
 
         double paneW = gamePane.getWidth();
         double paneH = gamePane.getHeight();
-        // Bạn có thể điều chỉnh các giá trị sau để ô khớp khung thành của bạn
-        double goalWidth = paneW * 0.6;  // 60% chiều ngang pane
-        double goalHeight = 200;         // cố định cao khung thành
-        double startX = (paneW - goalWidth) / 2.0;
-        double startY = 100;  // khoảng cách từ trên pane tới khung thành (tùy bạn điều chỉnh)
+        // Khung 6 ô trùng khít ảnh khung thành nếu có; fallback nếu goalView chưa sẵn sàng
+        double gridWidth;
+        double gridHeight;
+        double gridStartX;
+        double gridStartY;
+
+        if (goalView != null) {
+            gridWidth = goalView.getBoundsInParent().getWidth();
+            gridHeight = goalView.getBoundsInParent().getHeight();
+            gridStartX = goalView.getLayoutX();
+            gridStartY = goalView.getLayoutY();
+        } else {
+            gridWidth = Math.min(paneW * 0.68, 320);
+            gridHeight = 170;
+            gridStartX = (paneW - gridWidth) / 2.0;
+            gridStartY = 30;
+        }
+
+        // Thu nhỏ chiều cao khung 6 ô và canh giữa theo chiều dọc trong ảnh khung thành
+        double heightScale = 0.65; // 65% chiều cao gốc
+        double scaledGridHeight = gridHeight * heightScale;
+        double verticalOffset = (gridHeight - scaledGridHeight) / 2.0;
+        gridStartY += verticalOffset; // đẩy xuống để giữ tâm dọc như cũ
+        gridHeight = scaledGridHeight;
 
         int rows = 2;
         int cols = 3;
-        double cellW = goalWidth / cols;
-        double cellH = goalHeight / rows;
+        double cellW = gridWidth / cols;
+        double cellH = gridHeight / rows;
 
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                Rectangle rect = new Rectangle(startX + c * cellW, startY + r * cellH, cellW, cellH);
+                Rectangle rect = new Rectangle(gridStartX + c * cellW, gridStartY + r * cellH, cellW, cellH); // left edge of grid
                 rect.setId("goalZone_" + r + "_" + c);
                 rect.setFill(Color.rgb(255, 255, 255, 0.1));
                 rect.setStroke(Color.WHITE);
@@ -765,7 +790,7 @@ public class GameRoomController {
 
     private String convertZoneToDirection(int row, int col) {
         // Normalize mapping to the server's expected simple directions
-        // Use column only: 0 -> Left, 1 -> Middle, 2 -> Right
+         // Use column only: 0 -> Left, 1 -> Middle, 2 -> Right
         if (col == 0) return "Left";
         if (col == 1) return "Middle";
         if (col == 2) return "Right";

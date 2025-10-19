@@ -460,16 +460,7 @@ public class Client {
     public void showGameRoomUI(String startMessage) {
         try {
             System.out.println("Loading GameRoomUI.fxml...");
-            // Try primary FXML path then fallback if resources root differs
-            URL fxmlUrl = GameRoomController.class.getResource("/resources/GUI/GameRoomUI.fxml");
-            if (fxmlUrl == null) {
-                fxmlUrl = GameRoomController.class.getResource("/GUI/GameRoomUI.fxml");
-            }
-            if (fxmlUrl == null) {
-                showErrorAlert("Không tìm thấy GameRoomUI.fxml.\nHãy đảm bảo thư mục 'src/resources/GUI' nằm trên classpath hoặc đường dẫn đúng.");
-                return;
-            }
-            FXMLLoader loader = new FXMLLoader(fxmlUrl);
+            FXMLLoader loader = new FXMLLoader(GameRoomController.class.getResource("/resources/GUI/GameRoomUI.fxml"));
             Parent root = loader.load();
             gameRoomController = loader.getController();
 
@@ -483,9 +474,6 @@ public class Client {
             Scene scene = new Scene(root);
 
             URL cssLocation = GameRoomController.class.getResource("/resources/GUI/style.css");
-            if (cssLocation == null) {
-                cssLocation = GameRoomController.class.getResource("/GUI/style.css");
-            }
             if (cssLocation != null) {
                 scene.getStylesheets().add(cssLocation.toExternalForm());
                 System.out.println("CSS file loaded: " + cssLocation.toExternalForm());

@@ -143,63 +143,9 @@ public class GameRoom {
             goalkeeperTimeoutTask.cancel(true);
         }
 
-        // Xử lý kết quả
+        // Xử lý kết quả và kết thúc round qua hàm dùng chung
         boolean goal = !shooterDirection.equalsIgnoreCase(goalkeeperDirection);
-        if (goal) {
-            // Người sút ghi bàn thì cộng điểm cho shooter
-            shooterScore++;
-        } else {
-            // Thủ môn bắt được bóng thì cộng điểm cho goalkeeper
-            goalkeeperScore++;
-        }
-
-        // Gửi kết quả riêng cho từng người theo góc nhìn của họ
-        // Shooter: "win" nếu ghi bàn, "lose" nếu bị bắt
-        String kick_result_shooter = (goal ? "win" : "lose") + "-" + shooterDirection + "-" + goalkeeperDirection;
-        // Goalkeeper: "win" nếu bắt được, "lose" nếu thủng lưới
-        String kick_result_goalkeeper = (goal ? "lose" : "win") + "-" + shooterDirection + "-" + goalkeeperDirection;
-        
-        shooterHandler.sendMessage(new Message("kick_result", kick_result_shooter));
-        goalkeeperHandler.sendMessage(new Message("kick_result", kick_result_goalkeeper));
-
-        // Lưu chi tiết trận đấu vào database
-        dbManager.saveMatchDetails(matchId, currentRound,
-                shooterHandler.getUser().getId(),
-                goalkeeperHandler.getUser().getId(),
-                shooterDirection, goalkeeperDirection, goal ? "win" : "lose");
-
-        // Gửi tỷ số cập nhật cho từng người chơi
-        Message scoreMessageToShooter = new Message("update_score",
-                new int[] { shooterScore, goalkeeperScore, currentRound });
-        Message scoreMessageToGoalkeeper = new Message("update_score",
-                new int[] { goalkeeperScore, shooterScore, currentRound });
-
-        shooterHandler.sendMessage(scoreMessageToShooter);
-        goalkeeperHandler.sendMessage(scoreMessageToGoalkeeper);
-
-        // Tăng round
-        currentRound++;
-        
-        // Kiểm tra nếu đã hết 10 rounds
-        if (currentRound > MAX_ROUNDS) {
-            determineWinner();
-        } else {
-            // Đổi vai trò sau mỗi round để cả 2 người luân phiên sút/bắt
-            swapRoles();
-            
-            // Thông báo vai trò mới
-            String shooterMessage = "Round " + currentRound + ": Bây giờ bạn là người sút.";
-            String goalkeeperMessage = "Round " + currentRound + ": Bây giờ bạn là người bắt.";
-            shooterHandler.sendMessage(new Message("role_change", shooterMessage));
-            goalkeeperHandler.sendMessage(new Message("role_change", goalkeeperMessage));
-            
-            // Reset trạng thái và tiếp tục round mới
-            shooterDirection = null;
-            goalkeeperDirection = null;
-            shooterActionReceived = false;
-            goalkeeperActionReceived = false;
-            requestNextMove();
-        }
+        resolveRound(goal, this.shooterDirection, this.goalkeeperDirection, "normal");
     }
 
     private void determineWinner() throws SQLException, IOException {
@@ -442,22 +388,28 @@ public class GameRoom {
             }
             if (!shooterActionReceived) {
                 // Người sút không thực hiện hành động trong thời gian quy định
-                shooterDirection = "Middle";
                 shooterActionReceived = true;
-                shooterHandler.sendMessage(new Message("timeout", "Hết giờ! \nHệ thống tự chọn 'Middle' cho bạn."));
+                goalkeeperActionReceived = true; // kết thúc luôn round do hết giờ
+
+                // Thông báo timeout
+                shooterHandler.sendMessage(new Message("timeout", "Hết giờ! Bạn bị mất lượt."));
                 goalkeeperHandler.sendMessage(new Message("opponent_timeout",
-                        "Hết giờ! \nHệ thống tự chọn 'Middle' cho đối thủ."));
+                        "Đối thủ hết giờ! Bạn được cộng 1 điểm."));
 
-                // Thông báo lượt cho người bắt chọn hướng
-                goalkeeperHandler.sendMessage(new Message("goalkeeper_turn", TURN_TIMEOUT));
-                shooterHandler.sendMessage(new Message("opponent_turn", TURN_TIMEOUT));
+                // Chọn hướng để hiển thị animation: đặt cả 2 cùng 'Middle' để mô phỏng thủ môn bắt bóng
+                this.shooterDirection = "Middle";
+                this.goalkeeperDirection = "Middle";
 
-                // Bắt đầu đếm thời gian chờ cho người bắt (schedule with delay)
-                goalkeeperActionReceived = false;
+                // Hủy mọi timeout còn lại
+                if (shooterTimeoutTask != null && !shooterTimeoutTask.isDone()) {
+                    shooterTimeoutTask.cancel(true);
+                }
                 if (goalkeeperTimeoutTask != null && !goalkeeperTimeoutTask.isDone()) {
                     goalkeeperTimeoutTask.cancel(true);
                 }
-                goalkeeperTimeoutTask = scheduler.schedule(() -> startGoalkeeperTimeout(), TURN_TIMEOUT, TimeUnit.SECONDS);
+
+                // Kết thúc round: đối thủ (GK) được 1 điểm
+                resolveRound(false, this.shooterDirection, this.goalkeeperDirection, "shooter_timeout");
             }
         } catch (SQLException | IOException e) {
             e.printStackTrace();
@@ -478,19 +430,100 @@ public class GameRoom {
                     // Shooter chưa chọn hướng, không thể tự động chọn cho GK
                     return;
                 }
-                goalkeeperDirection = "Middle";
                 goalkeeperActionReceived = true;
 
+                // Gửi thông báo timeout
                 goalkeeperHandler.sendMessage(
-                        new Message("timeout", "Hết giờ! \nHệ thống tự chọn 'Middle' cho bạn."));
+                        new Message("timeout", "Hết giờ! Bạn bị mất lượt."));
                 shooterHandler.sendMessage(new Message("opponent_timeout",
-                        "Hết giờ! \nHệ thống tự chọn 'Middle' cho đối thủ."));
+                        "Đối thủ hết giờ! Bạn được cộng 1 điểm."));
 
-                // Tiến hành xử lý kết quả
-                handleGoalkeeper(goalkeeperDirection, goalkeeperHandler);
+                // Chọn hướng thủ môn khác với người sút để đảm bảo người sút ghi bàn
+                if ("Left".equalsIgnoreCase(this.shooterDirection)) {
+                    this.goalkeeperDirection = "Right";
+                } else if ("Right".equalsIgnoreCase(this.shooterDirection)) {
+                    this.goalkeeperDirection = "Left";
+                } else { // shooter chọn Middle
+                    this.goalkeeperDirection = "Left"; // chọn khác để đảm bảo có bàn thắng
+                }
+
+                // Hủy mọi timeout còn lại
+                if (goalkeeperTimeoutTask != null && !goalkeeperTimeoutTask.isDone()) {
+                    goalkeeperTimeoutTask.cancel(true);
+                }
+                if (shooterTimeoutTask != null && !shooterTimeoutTask.isDone()) {
+                    shooterTimeoutTask.cancel(true);
+                }
+
+                // Kết thúc round: người sút được 1 điểm
+                resolveRound(true, this.shooterDirection, this.goalkeeperDirection, "goalkeeper_timeout");
             }
         } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // Hàm dùng chung để kết thúc một round với kết quả đã biết
+    private synchronized void resolveRound(boolean goal, String shooterDir, String gkDir, String reason)
+            throws SQLException, IOException {
+        // Hủy mọi timeout còn lại để tránh chạy trễ
+        if (shooterTimeoutTask != null && !shooterTimeoutTask.isDone()) {
+            shooterTimeoutTask.cancel(true);
+        }
+        if (goalkeeperTimeoutTask != null && !goalkeeperTimeoutTask.isDone()) {
+            goalkeeperTimeoutTask.cancel(true);
+        }
+
+        // Cập nhật điểm số
+        if (goal) {
+            shooterScore++;
+        } else {
+            goalkeeperScore++;
+        }
+
+        // Gửi kết quả riêng cho từng người theo góc nhìn của họ
+        String kick_result_shooter = (goal ? "win" : "lose") + "-" + shooterDir + "-" + gkDir;
+        String kick_result_goalkeeper = (goal ? "lose" : "win") + "-" + shooterDir + "-" + gkDir;
+        shooterHandler.sendMessage(new Message("kick_result", kick_result_shooter));
+        goalkeeperHandler.sendMessage(new Message("kick_result", kick_result_goalkeeper));
+
+        // Lưu chi tiết trận đấu vào database (result lưu theo góc nhìn người sút)
+        dbManager.saveMatchDetails(matchId, currentRound,
+                shooterHandler.getUser().getId(),
+                goalkeeperHandler.getUser().getId(),
+                shooterDir, gkDir, goal ? "win" : "lose");
+
+        // Gửi tỷ số cập nhật cho từng người chơi
+        Message scoreMessageToShooter = new Message("update_score",
+                new int[] { shooterScore, goalkeeperScore, currentRound });
+        Message scoreMessageToGoalkeeper = new Message("update_score",
+                new int[] { goalkeeperScore, shooterScore, currentRound });
+        shooterHandler.sendMessage(scoreMessageToShooter);
+        goalkeeperHandler.sendMessage(scoreMessageToGoalkeeper);
+
+        // Tăng round
+        currentRound++;
+
+        // Kiểm tra nếu đã hết 10 rounds
+        if (currentRound > MAX_ROUNDS) {
+            determineWinner();
+            return;
+        }
+
+        // Đổi vai trò sau mỗi round để cả 2 người luân phiên sút/bắt
+        swapRoles();
+
+        // Thông báo vai trò mới
+        String shooterMessage = "Round " + currentRound + ": Bây giờ bạn là người sút.";
+        String goalkeeperMessage = "Round " + currentRound + ": Bây giờ bạn là người bắt.";
+        shooterHandler.sendMessage(new Message("role_change", shooterMessage));
+        goalkeeperHandler.sendMessage(new Message("role_change", goalkeeperMessage));
+
+        // Reset trạng thái và tiếp tục round mới
+        shooterDirection = null;
+        goalkeeperDirection = null;
+        shooterActionReceived = false;
+        goalkeeperActionReceived = false;
+        requestNextMove();
     }
 }
