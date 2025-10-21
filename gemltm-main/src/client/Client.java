@@ -387,6 +387,9 @@ public class Client {
 
     public void showMainUI() {
         try {
+            // Clear game room controller để không nhận message game nữa
+            gameRoomController = null;
+            
             System.out.println("Loading MainUI.fxml...");
             FXMLLoader loader = new FXMLLoader(MainController.class.getResource("/resources/GUI/MainUI.fxml"));
             Parent root = loader.load();

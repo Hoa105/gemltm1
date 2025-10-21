@@ -508,6 +508,17 @@ public class GameRoomController {
     }
 
     public void endMatch(String result) {
+        // Dừng countdown ngay lập tức
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+        
+        // Disable tất cả nút
+        shootButton.setDisable(true);
+        goalkeeperButton.setDisable(true);
+        quitButton.setDisable(true);
+        isMyTurn = false;
+        
         if (mu != null) mu.stop();
         Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
@@ -572,6 +583,19 @@ public class GameRoomController {
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == yesButton) {
+                // Dừng countdown timer ngay lập tức
+                if (countdownTimeline != null) {
+                    countdownTimeline.stop();
+                }
+                
+                // Disable tất cả nút
+                shootButton.setDisable(true);
+                goalkeeperButton.setDisable(true);
+                quitButton.setDisable(true);
+                
+                // Đặt cờ để không nhận message nữa
+                isMyTurn = false;
+                
                 Message quitMessage = new Message("quit_game", null);
                 try {
                     client.sendMessage(quitMessage);
