@@ -1,0 +1,46 @@
+# Bytecode & build
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+/bin/
+/build/
+/dist/
+/target/
+/out/
+/.gradle/
+/.mvn/
+dependency-reduced-pom.xml
+
+# Logs & temp
+*.log
+hs_err_pid*
+*.tmp
+*.swp
+
+# IDE
+# Eclipse
+.project
+.classpath
+.settings/
+# IntelliJ
+.idea/
+*.iml
+# VS Code
+.vscode/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java tooling
+.mtj.tmp/
+.checkstyle/
+.sonar/
