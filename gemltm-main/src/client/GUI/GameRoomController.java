@@ -605,6 +605,41 @@ public class GameRoomController {
         });
     }
 
+    @FXML
+    private void handleReturnToMain() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Quay về Màn hình chính");
+            alert.setHeaderText(null);
+            alert.setContentText("Bạn có chắc chắn muốn quay về màn hình chính? Trận đấu sẽ kết thúc và bạn sẽ thua.");
+            ButtonType yesButton = new ButtonType("Có", ButtonBar.ButtonData.YES);
+            ButtonType noButton  = new ButtonType("Không", ButtonBar.ButtonData.NO);
+            alert.getButtonTypes().setAll(yesButton, noButton);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == yesButton) {
+                // Dừng countdown timer ngay lập tức
+                if (countdownTimeline != null) {
+                    countdownTimeline.stop();
+                }
+                
+                // Disable tất cả nút
+                shootButton.setDisable(true);
+                goalkeeperButton.setDisable(true);
+                quitButton.setDisable(true);
+                
+                // Đặt cờ để không nhận message nữa
+                isMyTurn = false;
+                
+                Message quitMessage = new Message("quit_game", null);
+                try {
+                    client.sendMessage(quitMessage);
+                    client.showMainUI();
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+        });
+    }
+
     public void showStartMessage(String message) {
         Platform.runLater(() -> {
             // Only show role; real turn prompts come from server via your_turn/goalkeeper_turn

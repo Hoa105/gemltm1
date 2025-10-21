@@ -3,77 +3,39 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="client.GUI.MainController">
+    fx:controller="client.GUI.MainController" prefWidth="500" prefHeight="400">
     <top>
         <MenuBar>
             <Menu text="Menu">
-                <MenuItem text="Đăng xuất" onAction="#handleLogout"/>
+                <MenuItem text="Đăng xuất" onAction="#handleLogout" />
             </Menu>
         </MenuBar>
     </top>
     <center>
-        <TabPane>
-            <Tab text="Danh Sách Người Chơi">
-                <VBox spacing="10">
-                    <padding>
-                        <Insets top="10" right="10" bottom="10" left="10"/>
-                    </padding>
-                    <HBox spacing="10">
-                        <TextField fx:id="searchField" promptText="Tìm kiếm theo tên"/>
-                        <Button text="Lọc Online" onAction="#handleFilterOnline"/>
-                        <Button text="Tìm" onAction="#handleSearch"/>
-                    </HBox>
-                    <TableView fx:id="usersTable">
-                        <columns>
-                            <TableColumn text="Tên" fx:id="nameColumn" prefWidth="150"/>
-                            <TableColumn text="Điểm" fx:id="pointsColumn" prefWidth="100"/>
-                            <TableColumn text="Trạng Thái" fx:id="statusColumn" prefWidth="100"/>
-                        </columns>
-                    </TableView>
-                </VBox>
-            </Tab>
-            <Tab text="Lịch Sử Đấu">
-                <VBox spacing="10">
-                    <padding>
-                        <Insets top="10" right="10" bottom="10" left="10"/>
-                    </padding>
-                    <!-- Sử dụng SplitPane để chia không gian giữa hai bảng -->
-                    <SplitPane orientation="VERTICAL">
-                        <TableView fx:id="matchesTable">
-                            <columns>
-                                <TableColumn text="Mã Trận" fx:id="matchIdColumn" prefWidth="80"/>
-                                <TableColumn text="Đối Thủ" fx:id="opponentColumn" prefWidth="150"/>
-                                <TableColumn text="Kết Quả" fx:id="matchResultColumn" prefWidth="80"/>
-                                <TableColumn text="Thời Gian" fx:id="matchTimeColumn" prefWidth="150"/>
-                            </columns>
-                        </TableView>
-                        <TableView fx:id="historyTable">
-                            <columns>
-                                <TableColumn text="Lượt" fx:id="roundColumn" prefWidth="80"/>
-                                <TableColumn text="Thời Gian" fx:id="timeColumn" prefWidth="150"/>
-                                <TableColumn text="Vai Trò" fx:id="roleColumn" prefWidth="100"/>
-                                <TableColumn text="Hướng" fx:id="directionColumn" prefWidth="100"/>
-                                <TableColumn text="Kết Quả" fx:id="historyResultColumn" prefWidth="80"/>
-                            </columns>
-                        </TableView>
-                    </SplitPane>
-                </VBox>
-            </Tab>
-            <Tab text="Bảng Xếp Hạng">
-                <VBox spacing="10">
-                    <padding>
-                        <Insets top="10" right="10" bottom="10" left="10"/>
-                    </padding>
-                    <TableView fx:id="leaderboardTable">
-                        <columns>
-                            <TableColumn text="Tên" fx:id="lbNameColumn" prefWidth="150"/>
-                            <TableColumn text="Điểm" fx:id="lbPointsColumn" prefWidth="100"/>
-                        </columns>
-                    </TableView>
-                </VBox>
-            </Tab>
-        </TabPane>
+        <VBox alignment="CENTER" spacing="30">
+            <padding>
+                <Insets top="50" right="50" bottom="50" left="50" />
+            </padding>
+
+            <!-- Tiêu đề chào mừng -->
+            <Label fx:id="welcomeLabel" text="Chào mừng!"
+                style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+
+            <!-- 3 Button chính -->
+            <Button text="Danh Sách Người Chơi Online" onAction="#handleShowPlayerList"
+                prefWidth="300" prefHeight="50"
+                style="-fx-font-size: 16px; -fx-background-color: #4CAF50; -fx-text-fill: white;" />
+
+            <Button text="Lịch Sử Trận Đấu" onAction="#handleShowHistory"
+                prefWidth="300" prefHeight="50"
+                style="-fx-font-size: 16px; -fx-background-color: #2196F3; -fx-text-fill: white;" />
+
+            <Button text="Bảng Xếp Hạng" onAction="#handleShowLeaderboard"
+                prefWidth="300" prefHeight="50"
+                style="-fx-font-size: 16px; -fx-background-color: #FF9800; -fx-text-fill: white;" />
+        </VBox>
     </center>
 </BorderPane>
