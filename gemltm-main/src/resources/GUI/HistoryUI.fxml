@@ -4,51 +4,62 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-    fx:controller="client.GUI.HistoryController">
-    <top>
-        <VBox>
-            <MenuBar>
-                <Menu text="Menu">
-                    <MenuItem text="Quay lại" onAction="#handleBack" />
-                    <MenuItem text="Đăng xuất" onAction="#handleLogout" />
-                </Menu>
-            </MenuBar>
-            <Label text="Lịch Sử Trận Đấu"
-                style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-padding: 10px;" />
-        </VBox>
-    </top>
-    <center>
-        <VBox spacing="10">
-            <padding>
-                <Insets top="10" right="10" bottom="10" left="10" />
-            </padding>
-            <SplitPane orientation="VERTICAL" VBox.vgrow="ALWAYS">
-                <TableView fx:id="matchesTable">
-                    <columns>
-                        <TableColumn text="Mã Trận" fx:id="matchIdColumn" prefWidth="80" />
-                        <TableColumn text="Đối Thủ" fx:id="opponentColumn" prefWidth="150" />
-                        <TableColumn text="Kết Quả" fx:id="matchResultColumn" prefWidth="100" />
-                        <TableColumn text="Thời Gian" fx:id="matchTimeColumn" prefWidth="200" />
-                    </columns>
-                </TableView>
-                <TableView fx:id="historyTable">
-                    <columns>
-                        <TableColumn text="Lượt" fx:id="roundColumn" prefWidth="80" />
-                        <TableColumn text="Thời Gian" fx:id="timeColumn" prefWidth="200" />
-                        <TableColumn text="Vai Trò" fx:id="roleColumn" prefWidth="100" />
-                        <TableColumn text="Hướng" fx:id="directionColumn" prefWidth="100" />
-                        <TableColumn text="Kết Quả" fx:id="historyResultColumn" prefWidth="80" />
-                    </columns>
-                </TableView>
-            </SplitPane>
-            <Label text="Click vào trận đấu để xem chi tiết các lượt"
-                style="-fx-font-style: italic; -fx-text-fill: gray;" />
-            <HBox alignment="CENTER" spacing="10">
-                <Button text="◄ Quay lại Màn hình chính" onAction="#handleBack"
-                    style="-fx-font-size: 14px; -fx-background-color: #9E9E9E; -fx-text-fill: white;"
-                    prefWidth="200" prefHeight="40" />
-            </HBox>
-        </VBox>
-    </center>
+<BorderPane xmlns="http://javafx.com/javafx/8"
+	xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="client.GUI.HistoryController">
+	<top>
+		<VBox>
+			<MenuBar>
+				<Menu text="Menu">
+					<MenuItem text="Quay lại" onAction="#handleBack" />
+					<MenuItem text="Đăng xuất" onAction="#handleLogout" />
+				</Menu>
+			</MenuBar>
+			<Label text="Lịch Sử Trận Đấu"
+				style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-padding: 10px;" />
+		</VBox>
+	</top>
+	<center>
+		<VBox spacing="10">
+			<padding>
+				<Insets top="10" right="10" bottom="10" left="10" />
+			</padding>
+			<SplitPane orientation="VERTICAL" VBox.vgrow="ALWAYS">
+				<TableView fx:id="matchesTable">
+					<columns>
+						<TableColumn text="Mã Trận" fx:id="matchIdColumn"
+							prefWidth="80" />
+						<TableColumn text="Đối Thủ" fx:id="opponentColumn"
+							prefWidth="150" />
+						<TableColumn text="Kết Quả" fx:id="matchResultColumn"
+							prefWidth="100" />
+						<TableColumn text="Thời Gian" fx:id="matchTimeColumn"
+							prefWidth="200" />
+					</columns>
+				</TableView>
+				<TableView fx:id="historyTable">
+					<columns>
+						<TableColumn text="Lượt" fx:id="roundColumn"
+							prefWidth="80" />
+						<TableColumn text="Thời Gian" fx:id="timeColumn"
+							prefWidth="200" />
+						<TableColumn text="Vai Trò" fx:id="roleColumn"
+							prefWidth="100" />
+						<TableColumn text="Hướng" fx:id="directionColumn"
+							prefWidth="100" />
+						<TableColumn text="Kết Quả"
+							fx:id="historyResultColumn" prefWidth="80" />
+					</columns>
+				</TableView>
+			</SplitPane>
+			<Label text="Click vào trận đấu để xem chi tiết các lượt"
+				style="-fx-font-style: italic; -fx-text-fill: gray;" />
+			<HBox alignment="CENTER" spacing="10">
+				<Button text="◄ Quay lại Màn hình chính"
+					onAction="#handleBack"
+					style="-fx-font-size: 14px; -fx-background-color: #9E9E9E; -fx-text-fill: white;"
+					prefWidth="200" prefHeight="40" />
+			</HBox>
+		</VBox>
+	</center>
 </BorderPane>

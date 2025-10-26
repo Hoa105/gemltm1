@@ -598,8 +598,9 @@ public class GameRoomController {
                 
                 Message quitMessage = new Message("quit_game", null);
                 try {
+                    // send quit to server and WAIT for server's match_end message
                     client.sendMessage(quitMessage);
-                    client.showMainUI();
+                    // Do NOT call client.showMainUI() here. endMatch() will be triggered by server's "match_end" message
                 } catch (IOException e) { e.printStackTrace(); }
             }
         });
@@ -633,8 +634,9 @@ public class GameRoomController {
                 
                 Message quitMessage = new Message("quit_game", null);
                 try {
+                    // send quit to server and WAIT for server's match_end message
                     client.sendMessage(quitMessage);
-                    client.showMainUI();
+                    // Do NOT call client.showMainUI() here. endMatch() will be triggered by server's "match_end" message
                 } catch (IOException e) { e.printStackTrace(); }
             }
         });
