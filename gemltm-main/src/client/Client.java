@@ -3,6 +3,9 @@ package client;
 import client.GUI.GameRoomController;
 import client.GUI.LoginController;
 import client.GUI.MainController;
+import client.GUI.PlayerListController;
+import client.GUI.HistoryController;
+import client.GUI.LeaderboardController;
 import common.Match;
 import common.MatchDetails;
 import common.Message;
@@ -34,6 +37,9 @@ public class Client {
     private LoginController loginController;
     private MainController mainController;
     private GameRoomController gameRoomController;
+    private PlayerListController playerListController;
+    private HistoryController historyController;
+    private LeaderboardController leaderboardController;
 
     private volatile boolean isRunning = true;
 
@@ -151,24 +157,24 @@ public class Client {
             case "user_list":
                 List<User> users = (List<User>) message.getContent();
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.updateUsersList(users);
+                    if (playerListController != null) {
+                        playerListController.updateUsersList(users);
                     }
                 });
                 break;
             case "status_update":
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.updateStatus((String) message.getContent());
+                    if (playerListController != null) {
+                        playerListController.updateStatus((String) message.getContent());
                     }
                 });
                 break;
             case "match_request":
                 final Object matchReqContent = message.getContent();
                 Platform.runLater(() -> {
-                    if (mainController != null) {
+                    if (playerListController != null) {
                         if (matchReqContent instanceof Integer) {
-                            mainController.showMatchRequest((Integer) matchReqContent);
+                            playerListController.showMatchRequest((Integer) matchReqContent);
                         } else {
                             System.out.println("Warning: match_request content not Integer: " + matchReqContent);
                         }
@@ -177,8 +183,8 @@ public class Client {
                 break;
             case "match_response":
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.handleMatchResponse((String) message.getContent());
+                    if (playerListController != null) {
+                        playerListController.handleMatchResponse((String) message.getContent());
                     }
                 });
                 break;
@@ -248,8 +254,8 @@ public class Client {
             case "leaderboard":
                 List<User> leaderboard = (List<User>) message.getContent();
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.updateLeaderboard(leaderboard);
+                    if (leaderboardController != null) {
+                        leaderboardController.updateLeaderboard(leaderboard);
                     }
                 });
                 break;
@@ -257,8 +263,8 @@ public class Client {
             case "match_history":
                 List<MatchDetails> history = (List<MatchDetails>) message.getContent();
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.updateMatchHistory(history);
+                    if (historyController != null) {
+                        historyController.showMatchDetails(history);
                     }
                 });
                 break;
@@ -266,16 +272,16 @@ public class Client {
             case "user_matches":
                 List<Match> matches = (List<Match>) message.getContent();
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.updateMatchesList(matches);
+                    if (historyController != null) {
+                        historyController.updateMatchesList(matches);
                     }
                 });
                 break;
             case "match_details":
                 List<MatchDetails> details = (List<MatchDetails>) message.getContent();
                 Platform.runLater(() -> {
-                    if (mainController != null) {
-                        mainController.showMatchDetails(details);
+                    if (historyController != null) {
+                        historyController.showMatchDetails(details);
                     }
                 });
                 break;
@@ -387,6 +393,9 @@ public class Client {
 
     public void showMainUI() {
         try {
+            // Clear game room controller để không nhận message game nữa
+            gameRoomController = null;
+            
             System.out.println("Loading MainUI.fxml...");
             FXMLLoader loader = new FXMLLoader(MainController.class.getResource("/resources/GUI/MainUI.fxml"));
             Parent root = loader.load();
@@ -414,11 +423,85 @@ public class Client {
             primaryStage.setMinWidth(400);
             primaryStage.setMinHeight(300);
             primaryStage.show();
-            sendMessage(new Message("get_users", null));
         } catch (IOException e) {
             e.printStackTrace();
             showErrorAlert("Không thể tải giao diện chính.");
         }
+    }
+
+    public void showPlayerListUI() throws IOException {
+        System.out.println("Loading PlayerListUI.fxml...");
+        FXMLLoader loader = new FXMLLoader(PlayerListController.class.getResource("/resources/GUI/PlayerListUI.fxml"));
+        Parent root = loader.load();
+        playerListController = loader.getController();
+
+        if (playerListController == null) {
+            System.err.println("Controller is null for PlayerListUI.fxml");
+            showErrorAlert("Không thể tải controller danh sách người chơi.");
+            return;
+        }
+
+        playerListController.setClient(this);
+        Scene scene = new Scene(root);
+
+        URL cssLocation = PlayerListController.class.getResource("/resources/GUI/style.css");
+        if (cssLocation != null) {
+            scene.getStylesheets().add(cssLocation.toExternalForm());
+        }
+
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Danh Sách Người Chơi");
+        primaryStage.show();
+    }
+
+    public void showHistoryUI() throws IOException {
+        System.out.println("Loading HistoryUI.fxml...");
+        FXMLLoader loader = new FXMLLoader(HistoryController.class.getResource("/resources/GUI/HistoryUI.fxml"));
+        Parent root = loader.load();
+        historyController = loader.getController();
+
+        if (historyController == null) {
+            System.err.println("Controller is null for HistoryUI.fxml");
+            showErrorAlert("Không thể tải controller lịch sử.");
+            return;
+        }
+
+        historyController.setClient(this);
+        Scene scene = new Scene(root);
+
+        URL cssLocation = HistoryController.class.getResource("/resources/GUI/style.css");
+        if (cssLocation != null) {
+            scene.getStylesheets().add(cssLocation.toExternalForm());
+        }
+
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Lịch Sử Trận Đấu");
+        primaryStage.show();
+    }
+
+    public void showLeaderboardUI() throws IOException {
+        System.out.println("Loading LeaderboardUI.fxml...");
+        FXMLLoader loader = new FXMLLoader(LeaderboardController.class.getResource("/resources/GUI/LeaderboardUI.fxml"));
+        Parent root = loader.load();
+        leaderboardController = loader.getController();
+
+        if (leaderboardController == null) {
+            System.err.println("Controller is null for LeaderboardUI.fxml");
+            showErrorAlert("Không thể tải controller bảng xếp hạng.");
+            return;
+        }
+
+        leaderboardController.setClient(this);
+        Scene scene = new Scene(root);
+
+        URL cssLocation = LeaderboardController.class.getResource("/resources/GUI/style.css");
+        if (cssLocation != null) {
+            scene.getStylesheets().add(cssLocation.toExternalForm());
+        }
+
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Bảng Xếp Hạng");
+        primaryStage.show();
     }
 
     public void showLoginUI() {

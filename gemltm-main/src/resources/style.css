@@ -1,7 +1,11 @@
 /* style.css */
 .root {
     -fx-font-family: "Arial";
-    -fx-background-color: #2E8B57;
+    -fx-background-image: url("../assets/sân.png");
+    -fx-background-size: cover; /* scale to fill */
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center center;
+    -fx-background-color: transparent;
 }
 
 .label {
@@ -9,31 +13,55 @@
 }
 
 .button {
-    -fx-background-color: #3CB371;
+    -fx-background-color: rgba(60,179,113,0.9); /* slightly transparent to show bg */
     -fx-text-fill: white;
     -fx-font-size: 14px;
 }
 
+/* Make common layout panes transparent so the root background image is visible */
+.pane, .anchor-pane, .border-pane, .stack-pane, .vbox, .hbox, .grid-pane {
+    -fx-background-color: transparent;
+}
+
+/* Tab content area should also be transparent */
+.tab-pane .tab-content-area {
+    -fx-background-color: transparent;
+}
+
+/* Keep menus lightly transparent so they remain readable */
+.menu-bar {
+    -fx-background-color: rgba(60,179,113,0.85);
+}
+
+.menu-bar .menu {
+    -fx-text-fill: white;
+}
+
+/* Make table and input controls use a semi-opaque background so text stays readable over the image */
 .table-view {
-    -fx-background-color: #FFFFFF; /* Đổi nền bảng thành trắng */
+    -fx-background-color: rgba(255,255,255,0.9);
 }
 
-.text-field, .password-field {
-    -fx-background-color: #FFFFFF; /* Đổi nền trường nhập liệu thành trắng */
+.text-field, .password-field, .text-area {
+    -fx-background-color: rgba(255,255,255,0.95);
 }
 
+/* Ensure dialogs and popups use a solid background for readability */
+.dialog-pane {
+    -fx-background-color: rgba(255,255,255,0.95);
+}
+
+/* Keep tab headers contrasting */
 .tab-pane .tab-header-area {
-    -fx-background-color: #3CB371;
+    -fx-background-color: rgba(60,179,113,0.9);
 }
 
 .tab-pane .tab-header-area .tab {
     -fx-text-fill: white;
 }
 
-.menu-bar {
-    -fx-background-color: #3CB371;
-}
-
-.menu-bar .menu {
+/* Misc adjustments */
+.label.title {
+    -fx-font-size: 18px;
     -fx-text-fill: white;
 }

@@ -508,6 +508,17 @@ public class GameRoomController {
     }
 
     public void endMatch(String result) {
+        // Dừng countdown ngay lập tức
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+        
+        // Disable tất cả nút
+        shootButton.setDisable(true);
+        goalkeeperButton.setDisable(true);
+        quitButton.setDisable(true);
+        isMyTurn = false;
+        
         if (mu != null) mu.stop();
         Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
@@ -572,10 +583,60 @@ public class GameRoomController {
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == yesButton) {
+                // Dừng countdown timer ngay lập tức
+                if (countdownTimeline != null) {
+                    countdownTimeline.stop();
+                }
+                
+                // Disable tất cả nút
+                shootButton.setDisable(true);
+                goalkeeperButton.setDisable(true);
+                quitButton.setDisable(true);
+                
+                // Đặt cờ để không nhận message nữa
+                isMyTurn = false;
+                
                 Message quitMessage = new Message("quit_game", null);
                 try {
+                    // send quit to server and WAIT for server's match_end message
                     client.sendMessage(quitMessage);
-                    client.showMainUI();
+                    // Do NOT call client.showMainUI() here. endMatch() will be triggered by server's "match_end" message
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+        });
+    }
+
+    @FXML
+    private void handleReturnToMain() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Quay về Màn hình chính");
+            alert.setHeaderText(null);
+            alert.setContentText("Bạn có chắc chắn muốn quay về màn hình chính? Trận đấu sẽ kết thúc và bạn sẽ thua.");
+            ButtonType yesButton = new ButtonType("Có", ButtonBar.ButtonData.YES);
+            ButtonType noButton  = new ButtonType("Không", ButtonBar.ButtonData.NO);
+            alert.getButtonTypes().setAll(yesButton, noButton);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == yesButton) {
+                // Dừng countdown timer ngay lập tức
+                if (countdownTimeline != null) {
+                    countdownTimeline.stop();
+                }
+                
+                // Disable tất cả nút
+                shootButton.setDisable(true);
+                goalkeeperButton.setDisable(true);
+                quitButton.setDisable(true);
+                
+                // Đặt cờ để không nhận message nữa
+                isMyTurn = false;
+                
+                Message quitMessage = new Message("quit_game", null);
+                try {
+                    // send quit to server and WAIT for server's match_end message
+                    client.sendMessage(quitMessage);
+                    // Do NOT call client.showMainUI() here. endMatch() will be triggered by server's "match_end" message
                 } catch (IOException e) { e.printStackTrace(); }
             }
         });

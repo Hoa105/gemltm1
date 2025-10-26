@@ -1,0 +1,404 @@
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:13: error: package javafx.application does not exist
+import javafx.application.Platform;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:14: error: package javafx.fxml does not exist
+import javafx.fxml.FXMLLoader;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:15: error: package javafx.scene does not exist
+import javafx.scene.Parent;
+                   ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:16: error: package javafx.scene does not exist
+import javafx.scene.Scene;
+                   ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:17: error: package javafx.stage does not exist
+import javafx.stage.Stage;
+                   ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:18: error: package javafx.scene.control does not exist
+import javafx.scene.control.Alert;
+                           ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:34: error: cannot find symbol
+    private Stage primaryStage;
+            ^
+  symbol:   class Stage
+  location: class Client
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LoginController.java:6: error: package javafx.application does not exist
+import javafx.application.Platform;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LoginController.java:7: error: package javafx.fxml does not exist
+import javafx.fxml.FXML;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\MainController.java:5: error: package javafx.fxml does not exist
+import javafx.fxml.FXML;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\MainController.java:6: error: package javafx.scene.control does not exist
+import javafx.scene.control.Label;
+                           ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:9: error: package javafx.animation does not exist
+import javafx.animation.KeyFrame;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:10: error: package javafx.animation does not exist
+import javafx.animation.ParallelTransition;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:11: error: package javafx.animation does not exist
+import javafx.animation.PathTransition;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:12: error: package javafx.animation does not exist
+import javafx.animation.PauseTransition;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:13: error: package javafx.animation does not exist
+import javafx.animation.SequentialTransition;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:14: error: package javafx.animation does not exist
+import javafx.animation.Timeline;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:15: error: package javafx.animation does not exist
+import javafx.animation.TranslateTransition;
+                       ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:16: error: package javafx.application does not exist
+import javafx.application.Platform;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:17: error: package javafx.fxml does not exist
+import javafx.fxml.FXML;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:18: error: package javafx.scene does not exist
+import javafx.scene.Group;
+                   ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:20: error: package javafx.scene.control.Alert does not exist
+import javafx.scene.control.Alert.AlertType;
+                                 ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:21: error: package javafx.scene.image does not exist
+import javafx.scene.image.Image;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:22: error: package javafx.scene.image does not exist
+import javafx.scene.image.ImageView;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:23: error: package javafx.scene.layout does not exist
+import javafx.scene.layout.Pane;
+                          ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:24: error: package javafx.scene.media does not exist
+import javafx.scene.media.AudioClip;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:25: error: package javafx.scene.paint does not exist
+import javafx.scene.paint.Color;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:27: error: package javafx.scene.text does not exist
+import javafx.scene.text.Font;
+                        ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:28: error: package javafx.scene.text does not exist
+import javafx.scene.text.FontWeight;
+                        ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:29: error: package javafx.scene.text does not exist
+import javafx.scene.text.Text;
+                        ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:30: error: package javafx.scene.shape does not exist
+import javafx.scene.shape.Rectangle;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:31: error: package javafx.scene.paint does not exist
+import javafx.scene.paint.Color;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:32: error: package javafx.util does not exist
+import javafx.util.Duration;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:6: error: package javafx.application does not exist
+import javafx.application.Platform;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:7: error: package javafx.collections does not exist
+import javafx.collections.FXCollections;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:8: error: package javafx.collections does not exist
+import javafx.collections.ObservableList;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:9: error: package javafx.fxml does not exist
+import javafx.fxml.FXML;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:11: error: package javafx.scene.control.cell does not exist
+import javafx.scene.control.cell.PropertyValueFactory;
+                                ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:12: error: package javafx.scene.layout does not exist
+import javafx.scene.layout.HBox;
+                          ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:13: error: package javafx.scene.paint does not exist
+import javafx.scene.paint.Color;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:14: error: package javafx.scene.shape does not exist
+import javafx.scene.shape.Circle;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:7: error: package javafx.beans.property does not exist
+import javafx.beans.property.SimpleStringProperty;
+                            ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:8: error: package javafx.collections does not exist
+import javafx.collections.FXCollections;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:9: error: package javafx.collections does not exist
+import javafx.collections.ObservableList;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:10: error: package javafx.fxml does not exist
+import javafx.fxml.FXML;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:12: error: package javafx.scene.control.cell does not exist
+import javafx.scene.control.cell.PropertyValueFactory;
+                                ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:6: error: package javafx.beans.property does not exist
+import javafx.beans.property.SimpleIntegerProperty;
+                            ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:7: error: package javafx.collections does not exist
+import javafx.collections.FXCollections;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:8: error: package javafx.collections does not exist
+import javafx.collections.ObservableList;
+                         ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:9: error: package javafx.fxml does not exist
+import javafx.fxml.FXML;
+                  ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:11: error: package javafx.scene.control.cell does not exist
+import javafx.scene.control.cell.PropertyValueFactory;
+                                ^
+U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java:46: error: cannot find symbol
+    public Client(Stage primaryStage) {
+                  ^
+  symbol:   class Stage
+  location: class Client
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:19: error: cannot find symbol
+    private TableView<User> leaderboardTable;
+            ^
+  symbol:   class TableView
+  location: class LeaderboardController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:21: error: cannot find symbol
+    private TableColumn<User, Integer> rankColumn;
+            ^
+  symbol:   class TableColumn
+  location: class LeaderboardController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:23: error: cannot find symbol
+    private TableColumn<User, String> lbNameColumn;
+            ^
+  symbol:   class TableColumn
+  location: class LeaderboardController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\LeaderboardController.java:25: error: cannot find symbol
+    private TableColumn<User, Integer> lbPointsColumn;
+            ^
+  symbol:   class TableColumn
+  location: class LeaderboardController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:21: error: cannot find symbol
+    private TableView<Match> matchesTable;
+            ^
+  symbol:   class TableView
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:23: error: cannot find symbol
+    private TableColumn<Match, Integer> matchIdColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:25: error: cannot find symbol
+    private TableColumn<Match, String> opponentColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:27: error: cannot find symbol
+    private TableColumn<Match, String> matchResultColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:29: error: cannot find symbol
+    private TableColumn<Match, String> matchTimeColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:32: error: cannot find symbol
+    private TableView<MatchDetails> historyTable;
+            ^
+  symbol:   class TableView
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:34: error: cannot find symbol
+    private TableColumn<MatchDetails, Integer> roundColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:36: error: cannot find symbol
+    private TableColumn<MatchDetails, String> timeColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:38: error: cannot find symbol
+    private TableColumn<MatchDetails, String> roleColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:40: error: cannot find symbol
+    private TableColumn<MatchDetails, String> directionColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\HistoryController.java:42: error: cannot find symbol
+    private TableColumn<MatchDetails, String> historyResultColumn;
+            ^
+  symbol:   class TableColumn
+  location: class HistoryController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:24: error: cannot find symbol
+    private TextField searchField;
+            ^
+  symbol:   class TextField
+  location: class PlayerListController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:26: error: cannot find symbol
+    private TableView<User> usersTable;
+            ^
+  symbol:   class TableView
+  location: class PlayerListController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:28: error: cannot find symbol
+    private TableColumn<User, String> nameColumn;
+            ^
+  symbol:   class TableColumn
+  location: class PlayerListController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:30: error: cannot find symbol
+    private TableColumn<User, Integer> pointsColumn;
+            ^
+  symbol:   class TableColumn
+  location: class PlayerListController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:32: error: cannot find symbol
+    private TableColumn<User, String> statusColumn;
+            ^
+  symbol:   class TableColumn
+  location: class PlayerListController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\PlayerListController.java:35: error: cannot find symbol
+    private ObservableList<User> usersList = FXCollections.observableArrayList();
+            ^
+  symbol:   class ObservableList
+  location: class PlayerListController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:38: error: cannot find symbol
+    @FXML private TextArea chatArea;
+                  ^
+  symbol:   class TextArea
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:39: error: cannot find symbol
+    @FXML private TextField chatInput;
+                  ^
+  symbol:   class TextField
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:40: error: cannot find symbol
+    @FXML private Button shootButton;
+                  ^
+  symbol:   class Button
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:41: error: cannot find symbol
+    @FXML private Button goalkeeperButton;
+                  ^
+  symbol:   class Button
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:42: error: cannot find symbol
+    @FXML private Button quitButton;
+                  ^
+  symbol:   class Button
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:43: error: cannot find symbol
+    @FXML private Pane gamePane;
+                  ^
+  symbol:   class Pane
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:44: error: cannot find symbol
+    @FXML private Label scoreLabel;
+                  ^
+  symbol:   class Label
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:45: error: cannot find symbol
+    @FXML private Label timerLabel;
+                  ^
+  symbol:   class Label
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:48: error: cannot find symbol
+    private final ChoiceDialog<String> dialog = new ChoiceDialog<>("Middle", "Left", "Middle", "Right");
+                  ^
+  symbol:   class ChoiceDialog
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:63: error: cannot find symbol
+    private static final Duration KICK_IN_TIME  = Duration.millis(300);
+                         ^
+  symbol:   class Duration
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:64: error: cannot find symbol
+    private static final Duration KICK_BACK_TIME = Duration.millis(300);
+                         ^
+  symbol:   class Duration
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:69: error: cannot find symbol
+    private Group ball;
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:70: error: cannot find symbol
+    private Circle ballCircle;
+            ^
+  symbol:   class Circle
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:71: error: cannot find symbol
+    private Group goalkeeper;
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:72: error: cannot find symbol
+    private Group player;
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:73: error: cannot find symbol
+    private Group imageWinGroup;
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:74: error: cannot find symbol
+    private Group imageLoseGroup;
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:77: error: cannot find symbol
+    private ImageView fieldBgView;   // sân.png
+            ^
+  symbol:   class ImageView
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:78: error: cannot find symbol
+    private ImageView goalView;      // goal.png
+            ^
+  symbol:   class ImageView
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:91: error: cannot find symbol
+    private AudioClip siuuuuuu;
+            ^
+  symbol:   class AudioClip
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:92: error: cannot find symbol
+    private AudioClip mu;
+            ^
+  symbol:   class AudioClip
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:97: error: cannot find symbol
+    private Timeline countdownTimeline;
+            ^
+  symbol:   class Timeline
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:104: error: cannot find symbol
+    private List<Rectangle> goalZones = new ArrayList<>();
+                 ^
+  symbol:   class Rectangle
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:230: error: cannot find symbol
+    private Group createPlayer(double x, double y, String imgPath) {
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:242: error: cannot find symbol
+    private Group createKeeper(double goalLeftX, double goalWidth, double footY, String direction) {
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:269: error: cannot find symbol
+    private Group createBall(double x, double y, double radius) {
+            ^
+  symbol:   class Group
+  location: class GameRoomController
+U:\codeLTM\gemltm1\gemltm-main\src\client\GUI\GameRoomController.java:288: error: cannot find symbol
+    private SequentialTransition buildKickerMove() {
+            ^
+  symbol:   class SequentialTransition
+  location: class GameRoomController
+Note: U:\codeLTM\gemltm1\gemltm-main\src\client\Client.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+100 errors
+only showing the first 100 errors, of 481 total; use -Xmaxerrs if you would like to see more
