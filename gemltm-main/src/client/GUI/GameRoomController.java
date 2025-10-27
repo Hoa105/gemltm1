@@ -770,6 +770,21 @@ public class GameRoomController {
         goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, "Middle");
         gamePane.getChildren().add(goalkeeper);
     }
+
+    // Public API to stop any playing sounds from outside (e.g., when an invite fails)
+    public void stopAllSounds() {
+        try {
+            if (mu != null) {
+                mu.stop();
+            }
+            if (siuuuuuu != null) {
+                siuuuuuu.stop();
+            }
+        } catch (Exception ex) {
+            // Swallow exceptions to avoid crashing caller; log to console
+            System.err.println("Error stopping sounds: " + ex.getMessage());
+        }
+    }
     
     private void createGoalZones() {
         // Xóa các ô cũ nếu có

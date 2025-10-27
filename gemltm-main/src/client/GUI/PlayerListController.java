@@ -161,6 +161,13 @@ public class PlayerListController {
     }
 
     public void handleMatchResponse(String response) {
+        // Stop any game sounds in case an invite failed/was declined
+        try {
+            if (client != null) client.stopGameSounds();
+        } catch (Exception ex) {
+            System.err.println("Error stopping sounds on match response: " + ex.getMessage());
+        }
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Trận Đấu");
         alert.setHeaderText(null);

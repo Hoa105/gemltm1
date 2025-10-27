@@ -43,6 +43,17 @@ public class Client {
 
     private volatile boolean isRunning = true;
 
+    // New: control console logging (can be turned off when leaving game)
+    private volatile boolean loggingEnabled = true;
+
+    public void setLoggingEnabled(boolean enabled) {
+        this.loggingEnabled = enabled;
+    }
+
+    private void log(String msg) {
+        if (loggingEnabled) System.out.println(msg);
+    }
+
     public Client(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
@@ -79,7 +90,7 @@ public class Client {
                 while (isRunning) {
                     Message message = (Message) in.readObject();
                     if (message == null) {
-                        System.out.println("Received null message, ignoring.");
+                        log("Received null message, ignoring.");
                         continue;
                     }
                     handleMessage(message);
@@ -101,7 +112,7 @@ public class Client {
                         }
                     });
                 } else {
-                    System.out.println("Đã đóng kết nối, dừng luồng lắng nghe.");
+                    log("Đã đóng kết nối, dừng luồng lắng nghe.");
                 }
             }
         });
@@ -126,22 +137,22 @@ public class Client {
                 Object it = list.get(i);
                 if (it instanceof Number) res[i] = ((Number) it).intValue();
                 else {
-                    System.out.println("Warning: non-number in scores list: " + it);
+                    log("Warning: non-number in scores list: " + it);
                     res[i] = 0;
                 }
             }
             return res;
         }
-        System.out.println("Warning: cannot convert to int[]: " + o);
+        log("Warning: cannot convert to int[]: " + o);
         return null;
     }
 
     private void handleMessage(Message message) {
         if (message == null) {
-            System.out.println("handleMessage called with null message, ignoring.");
+            log("handleMessage called with null message, ignoring.");
             return;
         }
-        System.out.println("Received message: " + message.getType() + " - " + message.getContent());
+        log("Received message: " + message.getType() + " - " + message.getContent());
         switch (message.getType()) {
             case "login_success":
                 this.user = (User) message.getContent();
@@ -176,13 +187,15 @@ public class Client {
                         if (matchReqContent instanceof Integer) {
                             playerListController.showMatchRequest((Integer) matchReqContent);
                         } else {
-                            System.out.println("Warning: match_request content not Integer: " + matchReqContent);
+                            log("Warning: match_request content not Integer: " + matchReqContent);
                         }
                     }
                 });
                 break;
             case "match_response":
                 Platform.runLater(() -> {
+                    // Stop any game sounds when a match response (declined/failure) arrives
+                    try { stopGameSounds(); } catch (Exception ex) { System.err.println("Error stopping sounds on match_response: " + ex.getMessage()); }
                     if (playerListController != null) {
                         playerListController.handleMatchResponse((String) message.getContent());
                     }
@@ -199,7 +212,7 @@ public class Client {
                 final Object matchStartContent = message.getContent();
                 Platform.runLater(() -> {
                     if (matchStartContent instanceof String) showGameRoomUI((String) matchStartContent);
-                    else System.out.println("Warning: match_start content not String: " + matchStartContent);
+                    else log("Warning: match_start content not String: " + matchStartContent);
                 });
                 break;
             case "kick_result":
@@ -207,18 +220,18 @@ public class Client {
                     if (gameRoomController != null) {
                         final Object payloadObj = message.getContent();
                         if (!(payloadObj instanceof String)) {
-                            System.out.println("Warning: kick_result payload is not String: " + payloadObj);
+                            log("Warning: kick_result payload is not String: " + payloadObj);
                             return;
                         }
                         String payload = (String) payloadObj;
                         String[] result = payload.split("-");
-                        System.out.println("Received kick_result payload: " + payload + " -> parsed: " + Arrays.toString(result));
+                        log("Received kick_result payload: " + payload + " -> parsed: " + Arrays.toString(result));
                         if (result.length >= 3 && result[0].equals("win")) {
                             gameRoomController.animateShootVao(result[1], result[2]);
                         } else if (result.length >= 3) {
                             gameRoomController.animateShootKhongVao(result[1], result[2]);
                         } else {
-                            System.out.println("Warning: unexpected kick_result format: " + payload);
+                            log("Warning: unexpected kick_result format: " + payload);
                         }
                     }
                 });
@@ -289,7 +302,7 @@ public class Client {
             case "update_score":
                 final Object scoresObj = message.getContent();
                 int[] scores = toIntArray(scoresObj);
-                System.out.println("Client user=" + (user != null ? user.getUsername() : "(not-set)")
+                log("Client user=" + (user != null ? user.getUsername() : "(not-set)")
                         + " Received update_score array: " + Arrays.toString(scores));
                 Platform.runLater(() -> {
                     if (gameRoomController != null) {
@@ -324,7 +337,7 @@ public class Client {
                         }
                     });
                 } else {
-                    System.out.println("Warning: your_turn content not Integer: " + yourTurnObj);
+                    log("Warning: your_turn content not Integer: " + yourTurnObj);
                 }
                 break;
             case "goalkeeper_turn":
@@ -337,7 +350,7 @@ public class Client {
                         }
                     });
                 } else {
-                    System.out.println("Warning: goalkeeper_turn content not Integer: " + gkTurnObj);
+                    log("Warning: goalkeeper_turn content not Integer: " + gkTurnObj);
                 }
                 break;
 
@@ -351,7 +364,7 @@ public class Client {
                         }
                     });
                 } else {
-                    System.out.println("Warning: opponent_turn content not Integer: " + oppTurnObj);
+                    log("Warning: opponent_turn content not Integer: " + oppTurnObj);
                 }
                 break;
                 
@@ -395,8 +408,10 @@ public class Client {
         try {
             // Clear game room controller để không nhận message game nữa
             gameRoomController = null;
+            // Disable logging when returning to main UI (ngưng in log game)
+            setLoggingEnabled(false);
             
-            System.out.println("Loading MainUI.fxml...");
+            log("Loading MainUI.fxml...");
             FXMLLoader loader = new FXMLLoader(MainController.class.getResource("/resources/GUI/MainUI.fxml"));
             Parent root = loader.load();
             mainController = loader.getController();
@@ -413,7 +428,7 @@ public class Client {
             URL cssLocation = MainController.class.getResource("/resources/GUI/style.css");
             if (cssLocation != null) {
                 scene.getStylesheets().add(cssLocation.toExternalForm());
-                System.out.println("CSS file loaded: " + cssLocation.toExternalForm());
+                log("CSS file loaded: " + cssLocation.toExternalForm());
             } else {
                 System.err.println("Cannot find CSS file: style.css");
             }
@@ -430,7 +445,7 @@ public class Client {
     }
 
     public void showPlayerListUI() throws IOException {
-        System.out.println("Loading PlayerListUI.fxml...");
+        log("Loading PlayerListUI.fxml...");
         FXMLLoader loader = new FXMLLoader(PlayerListController.class.getResource("/resources/GUI/PlayerListUI.fxml"));
         Parent root = loader.load();
         playerListController = loader.getController();
@@ -455,7 +470,7 @@ public class Client {
     }
 
     public void showHistoryUI() throws IOException {
-        System.out.println("Loading HistoryUI.fxml...");
+        log("Loading HistoryUI.fxml...");
         FXMLLoader loader = new FXMLLoader(HistoryController.class.getResource("/resources/GUI/HistoryUI.fxml"));
         Parent root = loader.load();
         historyController = loader.getController();
@@ -480,7 +495,7 @@ public class Client {
     }
 
     public void showLeaderboardUI() throws IOException {
-        System.out.println("Loading LeaderboardUI.fxml...");
+        log("Loading LeaderboardUI.fxml...");
         FXMLLoader loader = new FXMLLoader(LeaderboardController.class.getResource("/resources/GUI/LeaderboardUI.fxml"));
         Parent root = loader.load();
         leaderboardController = loader.getController();
@@ -506,7 +521,9 @@ public class Client {
 
     public void showLoginUI() {
         try {
-            System.out.println("Loading LoginUI.fxml...");
+            // Disable logging on login screen
+            setLoggingEnabled(false);
+            log("Loading LoginUI.fxml...");
             FXMLLoader loader = new FXMLLoader(LoginController.class.getResource("/resources/GUI/LoginUI.fxml"));
             Parent root = loader.load();
             loginController = loader.getController();
@@ -523,7 +540,7 @@ public class Client {
             URL cssLocation = LoginController.class.getResource("/resources/GUI/style.css");
             if (cssLocation != null) {
                 scene.getStylesheets().add(cssLocation.toExternalForm());
-                System.out.println("CSS file loaded: " + cssLocation.toExternalForm());
+                log("CSS file loaded: " + cssLocation.toExternalForm());
             } else {
                 System.err.println("Cannot find CSS file: style.css");
             }
@@ -542,7 +559,9 @@ public class Client {
 
     public void showGameRoomUI(String startMessage) {
         try {
-            System.out.println("Loading GameRoomUI.fxml...");
+            // Enable logging while in game room
+            setLoggingEnabled(true);
+            log("Loading GameRoomUI.fxml...");
             FXMLLoader loader = new FXMLLoader(GameRoomController.class.getResource("/resources/GUI/GameRoomUI.fxml"));
             Parent root = loader.load();
             gameRoomController = loader.getController();
@@ -559,7 +578,7 @@ public class Client {
             URL cssLocation = GameRoomController.class.getResource("/resources/GUI/style.css");
             if (cssLocation != null) {
                 scene.getStylesheets().add(cssLocation.toExternalForm());
-                System.out.println("CSS file loaded: " + cssLocation.toExternalForm());
+                log("CSS file loaded: " + cssLocation.toExternalForm());
             } else {
                 System.err.println("Cannot find CSS file: style.css");
             }
@@ -579,6 +598,17 @@ public class Client {
 
     public User getUser() {
         return user;
+    }
+
+    // Allow other controllers to request stopping any game sounds
+    public void stopGameSounds() {
+        if (gameRoomController != null) {
+            try {
+                gameRoomController.stopAllSounds();
+            } catch (Exception ex) {
+                System.err.println("Error stopping game sounds via client: " + ex.getMessage());
+            }
+        }
     }
 
     public void closeConnection() throws IOException {
