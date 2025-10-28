@@ -1,11 +1,15 @@
-/* style.css */
+/* style.csskkkkkk */
 .root {
     -fx-font-family: "Arial";
-    -fx-background-color: linear-gradient(to bottom, #4caf50, #2e7d32);
+    -fx-background-image: url("../../assets/sân.png");
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center center;
+    -fx-background-color: transparent;
 }
 
 .button {
-    -fx-background-color: #ffd54f;
+    -fx-background-color: rgba(255,213,79,0.95); /* keep contrast */
     -fx-text-fill: black;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -21,16 +25,21 @@
     -fx-text-fill: yellow;
 }
 
+/* Make common layout panes transparent so the root background image is visible */
+.pane, .anchor-pane, .border-pane, .stack-pane, .vbox, .hbox, .grid-pane {
+    -fx-background-color: transparent;
+}
+
 .table-view {
-    -fx-background-color: #98FB98;
+    -fx-background-color: rgba(152,251,152,0.9);
 }
 
 .text-field, .password-field {
-    -fx-background-color: #F0FFF0;
+    -fx-background-color: rgba(240,255,240,0.95);
 }
 
 .tab-pane .tab-header-area {
-    -fx-background-color: #3CB371;
+    -fx-background-color: rgba(60,179,113,0.9);
 }
 
 .tab-pane .tab-header-area .tab {
@@ -38,7 +47,7 @@
 }
 
 .menu-bar {
-    -fx-background-color: #3CB371;
+    -fx-background-color: rgba(60,179,113,0.85);
 }
 
 .menu-bar .menu {

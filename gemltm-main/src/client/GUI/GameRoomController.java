@@ -598,8 +598,9 @@ public class GameRoomController {
                 
                 Message quitMessage = new Message("quit_game", null);
                 try {
+                    // send quit to server and WAIT for server's match_end message
                     client.sendMessage(quitMessage);
-                    client.showMainUI();
+                    // Do NOT call client.showMainUI() here. endMatch() will be triggered by server's "match_end" message
                 } catch (IOException e) { e.printStackTrace(); }
             }
         });
@@ -633,8 +634,9 @@ public class GameRoomController {
                 
                 Message quitMessage = new Message("quit_game", null);
                 try {
+                    // send quit to server and WAIT for server's match_end message
                     client.sendMessage(quitMessage);
-                    client.showMainUI();
+                    // Do NOT call client.showMainUI() here. endMatch() will be triggered by server's "match_end" message
                 } catch (IOException e) { e.printStackTrace(); }
             }
         });
@@ -767,6 +769,21 @@ public class GameRoomController {
         gamePane.getChildren().remove(goalkeeper);
         goalkeeper = createKeeper(currentGoalLeftX, currentGoalWidth, currentGoalBottomY-50, "Middle");
         gamePane.getChildren().add(goalkeeper);
+    }
+
+    // Public API to stop any playing sounds from outside (e.g., when an invite fails)
+    public void stopAllSounds() {
+        try {
+            if (mu != null) {
+                mu.stop();
+            }
+            if (siuuuuuu != null) {
+                siuuuuuu.stop();
+            }
+        } catch (Exception ex) {
+            // Swallow exceptions to avoid crashing caller; log to console
+            System.err.println("Error stopping sounds: " + ex.getMessage());
+        }
     }
     
     private void createGoalZones() {

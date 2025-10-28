@@ -10,9 +10,9 @@ import java.util.List;
 
 public class DatabaseManager {
 
-    private static final String URL = "jdbc:mysql://localhost:3307/penaltyshootout";
+    private static final String URL = "jdbc:mysql://localhost:3306/penalty_shootout";
     private static final String USER = "root"; // Thay bằng user MySQL của bạn
-    private static final String PASSWORD = "123456"; // Thay bằng password MySQL của bạn
+    private static final String PASSWORD = "131280"; // Thay bằng password MySQL của bạn
 
     private Connection conn;
 
